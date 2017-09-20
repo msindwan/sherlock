@@ -7,3 +7,4 @@ pkg
 node_modules
 .vertex
 target
+src/main/resources/dist
