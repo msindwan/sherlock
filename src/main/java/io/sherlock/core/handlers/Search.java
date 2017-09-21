@@ -1,4 +1,4 @@
-package io.sherlock.http.handlers;
+package io.sherlock.core.handlers;
 
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
@@ -25,7 +25,7 @@ public class Search {
         FSDirectory directory;
         JsonArray arr = new JsonArray();
         try {
-            directory = FSDirectory.open(new File("C://sherlock/indexes").toPath());
+            directory = FSDirectory.open(new File("C:/sherlock/indexes").toPath());
             // Now search the index:
             Analyzer analyzer = new StandardAnalyzer();
             DirectoryReader ireader = DirectoryReader.open(directory);

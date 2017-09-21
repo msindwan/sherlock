@@ -1,6 +1,6 @@
-package io.sherlock.http;
+package io.sherlock.core;
 
-import io.sherlock.http.handlers.Search;
+import io.sherlock.core.handlers.Search;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -13,7 +13,6 @@ public class Server extends AbstractVerticle {
 
     public static void main(String[] args) {
         System.setProperty("vertx.cwd", "/src/main/java");
-
         VertxOptions options = new VertxOptions();
         Consumer<Vertx> runner = vertx -> {
             try {

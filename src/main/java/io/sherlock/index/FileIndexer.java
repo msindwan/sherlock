@@ -15,7 +15,7 @@ import java.util.Stack;
 public class FileIndexer {
 
     public static void main(String[] args) throws IOException {
-        indexFiles("C://Projects", "C://sherlock/indexes");
+        indexFiles("C://Projects", "C://vertx/indexes");
     }
 
 
