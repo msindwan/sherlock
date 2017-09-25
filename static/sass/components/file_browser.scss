@@ -1,0 +1,22 @@
+.file-browser-cell {
+    padding: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #dedede;
+    cursor: pointer;
+
+    &:hover {
+        background: #fff5f5;
+    }
+
+    .fa-folder,
+    .fa-file-o {
+        margin-right: 6px;
+        color: #cf5b5b;
+        font-size: 14px;
+    }
+}
+
+.file-browser-nav {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}

@@ -13,7 +13,6 @@
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
     "babelify": "^7.3.0",
-    "browserify": "^14.4.0",
     "del": "^3.0.0",
     "eslint": "^2.3.0",
     "eslint-plugin-react": "^4.2.0",
@@ -30,10 +29,16 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-uglify": "^2.0.0",
     "gulp-util": "^3.0.7",
+    "ps-tree": "^1.1.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.6.1"
+  },
+  "dependencies": {
+    "axios": "^0.16.2",
+    "react-router": "^4.2.0",
+    "react-router-dom": "^4.2.2"
   }
 }

@@ -1,0 +1,31 @@
+@font-face {
+    font-family: Questrial;
+    src: url('/fonts/Questrial-Regular.ttf');
+}
+@import "./containers/common.scss";
+@import "./components/header.scss";
+@import "./components/footer.scss";
+@import "./components/file_browser.scss";
+
+body {
+    font-family: Questrial;
+}
+
+.crum {
+    display: inline-block;
+    cursor: pointer;
+
+    .crum-separator {
+        display: inline-block;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+
+    .crum-value {
+        color: #cf5b5b;
+        display: inline-block;
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
