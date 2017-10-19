@@ -23,8 +23,8 @@ let plugins = gplugins();
 // Application Config Properties
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const SERVER_FILES = 'src/main/**/*';
-const JS_FILES = 'static/javascript/**/*.jsx';
-const JS_ENTRY = 'static/javascript/app.jsx';
+const JS_FILES = 'static/javascript/**/*.{js,jsx}';
+const JS_ENTRY = 'static/javascript/App.jsx';
 const SASS_FILES = 'static/sass/**/*.scss';
 const SASS_ENTRY = 'static/sass/app.scss';
 const DIST = 'src/main/resources/dist';

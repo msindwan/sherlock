@@ -6,26 +6,47 @@
 @import "./components/header.scss";
 @import "./components/footer.scss";
 @import "./components/file_browser.scss";
+@import "./components/file_viewer.scss";
 
 body {
     font-family: Questrial;
 }
 
-.crum {
-    display: inline-block;
+pre {
+    background: #f9f9f9 !important;
+}
+
+span.react-syntax-highlighter-line-number {
+    padding-left: 10px;
     cursor: pointer;
+    padding-right: 10px;
 
-    .crum-separator {
-        display: inline-block;
-        margin-left: 5px;
-        margin-right: 5px;
+    &:hover {
+        background: #efbebe;
     }
+}
 
-    .crum-value {
-        color: #cf5b5b;
+
+.crums-nav {
+    margin-top: 10px;
+    margin-bottom: 20px;
+
+    .crum {
         display: inline-block;
-        &:hover {
-            text-decoration: underline;
+        cursor: pointer;
+
+        .crum-separator {
+            display: inline-block;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        .crum-value {
+            color: #cf5b5b;
+            display: inline-block;
+            &:hover {
+                text-decoration: underline;
+            }
         }
     }
 }

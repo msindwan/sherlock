@@ -6,15 +6,15 @@
  * @Author: Mayank Sindwani
  **/
 
-import FileBrowser from '../components/file_browser';
-import Header from '../components/header';
-import Footer from '../components/footer';
+import Browser from '../components/browser/Browser';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
 import React from 'react';
 
 const SearchContainer = () => (
     <div className="container">
         <Header />
-        <FileBrowser />
+        <Browser />
         <Footer />
     </div>
 );

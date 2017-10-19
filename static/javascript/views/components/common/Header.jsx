@@ -11,7 +11,7 @@ import React from 'react';
 
 const Header = () => (
     <div className="header">
-        Sherlock
+        <a href="/">Sherlock</a>
     </div>
 );
 

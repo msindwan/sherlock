@@ -42,7 +42,7 @@ public class Server extends AbstractVerticle {
         // Update the cwd.
         System.setProperty("vertx.cwd", "/src/main/java");
 
-        // Parse deployment options.
+        // TODO: Parse deployment options.
         deploymentOptions = new DeploymentOptions();
         options = new VertxOptions();
         config = new JsonObject();
@@ -82,6 +82,7 @@ public class Server extends AbstractVerticle {
         // Route endpoints.
         Router router = Router.router(vertx);
         router.get("/api/search").handler(Search::searchFiles);
+        router.get("/api/search/file").handler(Search::getFile);
         router.get("/api/search/files").handler(Search::listFileFolders);
 
         // Serve static files from the dist folder.
