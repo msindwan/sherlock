@@ -1,9 +1,10 @@
 /**
- * Search Container
+ * Sherlock SearchContainer
  *
- * @Description: Creates a container to house the search view.
- * @Date: 2017-09-222
- * @Author: Mayank Sindwani
+ * @Author : Mayank Sindwani
+ * @Date   : 2017-09-22
+ *
+ * Description : Main application container.
  **/
 
 import Browser from '../components/browser/Browser';

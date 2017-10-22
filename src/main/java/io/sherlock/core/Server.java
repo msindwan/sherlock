@@ -88,10 +88,10 @@ public class Server extends AbstractVerticle {
         // Serve static files from the dist folder.
         StaticHandler staticHandler = StaticHandler.create("dist");
         staticHandler.setCachingEnabled(cacheEnabled);
-        router.route().handler(staticHandler);
+        router.route("/dist/*").handler(staticHandler);
 
-        // Handle errors.
-        router.route().failureHandler(routingContext -> {
+        // Default to the index page.
+        router.route().handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
             response.sendFile("dist/index.html");
         });

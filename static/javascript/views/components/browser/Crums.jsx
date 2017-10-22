@@ -4,7 +4,7 @@
  * @Author : Mayank Sindwani
  * @Date   : 2017-09-22
  *
- * Description :
+ * Description : Displays bread crums for file paths.
  **/
 
 import React from 'react';

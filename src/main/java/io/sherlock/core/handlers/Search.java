@@ -204,7 +204,9 @@ public class Search {
             }
         }
 
-        routingContext.response().sendFile(root.getAbsolutePath());
+        routingContext.response()
+            .putHeader("content-type", "text/plain")
+            .sendFile(root.getAbsolutePath());
     }
 
 }

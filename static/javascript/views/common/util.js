@@ -38,6 +38,49 @@ class SherlockUtils {
         return ext;
     }
 
+
+    static saveHistory(queries=[]) {
+        let search = '';
+        var len = queries.length;
+
+        for (var i = 0; i < len; i++) {
+            let key = queries[i][0];
+            let value = queries[i][1];
+
+            if (i == 0) {
+                search += `?${key}=${value}`;
+            } else {
+                search += `&${key}=${value}`;
+            }
+
+        }
+        search = encodeURI(search);
+        if (window.location.search !== search) {
+            history.pushState({}, '', `/${search}`);
+        }
+    }
+
+    static replaceHistory(queries=[]) {
+        let search = '';
+        var len = queries.length;
+
+        for (var i = 0; i < len; i++) {
+            let key = queries[i][0];
+            let value = queries[i][1];
+
+            if (i == 0) {
+                search += `?${key}=${value}`;
+            } else {
+                search += `&${key}=${value}`;
+            }
+
+        }
+        search = encodeURI(search);
+        if (window.location.search !== search) {
+            history.replaceState({}, '', `/${search}`);
+        }
+    }
+
 }
 
 

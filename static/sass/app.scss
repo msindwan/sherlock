@@ -1,12 +1,11 @@
 @font-face {
     font-family: Questrial;
-    src: url('/fonts/Questrial-Regular.ttf');
+    src: url('/dist/fonts/Questrial-Regular.ttf');
 }
 @import "./containers/common.scss";
 @import "./components/header.scss";
 @import "./components/footer.scss";
 @import "./components/file_browser.scss";
-@import "./components/file_viewer.scss";
 
 body {
     font-family: Questrial;
@@ -21,7 +20,7 @@ span.react-syntax-highlighter-line-number {
     cursor: pointer;
     padding-right: 10px;
 
-    &:hover {
+    &.active {
         background: #efbebe;
     }
 }
