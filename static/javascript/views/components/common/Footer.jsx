@@ -11,9 +11,9 @@ import React from 'react';
 
 const Footer = () => (
     <div className="footer">
-        <a href="/">About</a>
-        <a href="/">Source Code</a>
-        <a href="/">Terms of Use</a>
+        <a className="portfolio-link" href="https://msindwan.bitbucket.io">© 2017 Mayank Sindwani</a>
+        <a className="source-link" href="https://bitbucket.org/msindwan/sherlock">Source Code</a>
+        <a className="terms-link" href="/terms">Terms of Use</a>
     </div>
 );
 
