@@ -35,6 +35,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class IndexOptions {
 
+    private Boolean indexAllFlag;
     private Path targetPath;
     private Path indexPath;
     private Options options;
@@ -44,6 +45,8 @@ public class IndexOptions {
 
     public IndexOptions() {
         this.options = new Options();
+        this.indexAllFlag = false;
+
         options.addOption("h", "help", false, "Show the help menu.");
 
         Option interval = Option.builder("i")
@@ -51,6 +54,11 @@ public class IndexOptions {
             .hasArg()
             .longOpt("interval")
             .desc("{integer} : Index files every `i` minutes.")
+            .build();
+
+        Option indexAll = Option.builder("a")
+            .longOpt("all")
+            .desc("Forces all files in the documents path to be (re-)indexed.")
             .build();
 
         Option documents = Option.builder("d")
@@ -74,6 +82,7 @@ public class IndexOptions {
         options.addOption(interval);
         options.addOption(documents);
         options.addOption(output);
+        options.addOption(indexAll);
     }
 
     public Path getTargetPath() {
@@ -86,6 +95,10 @@ public class IndexOptions {
 
     public int getInterval() {
         return interval;
+    }
+
+    public boolean getIndexAllFlag() {
+        return indexAllFlag;
     }
 
     public boolean hasHelpOption(String[] args) throws ParseException {
@@ -139,6 +152,7 @@ public class IndexOptions {
         interval = i;
         targetPath = target;
         indexPath = index;
+        indexAllFlag = cmd.hasOption("a");
     }
 
     public void printHelp() {

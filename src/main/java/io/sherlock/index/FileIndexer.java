@@ -60,6 +60,14 @@ import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 import org.apache.log4j.BasicConfigurator;
 
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchService;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * FileIndexer:
  * Automatically indexes files for Sherlock.
@@ -68,6 +76,9 @@ public class FileIndexer {
 
     static Logger logger = Logger.getLogger(FileIndexer.class.getName());
 
+    /**
+     * Entry point.
+     */
     public static void main(String[] args) {
         final IndexOptions options = new IndexOptions();
         BasicConfigurator.configure();
@@ -82,32 +93,35 @@ public class FileIndexer {
             // Parse and validate arguments.
             options.parse(args);
 
-            final Path targetPath = options.getTargetPath();
-            final Path indexPath  = options.getIndexPath();
+            Path targetPath  = options.getTargetPath();
+            Path indexPath   = options.getIndexPath();
+            Boolean indexAll = options.getIndexAllFlag();
 
             // IndexWriter Configuration.
             Analyzer analyzer = new StandardAnalyzer();
             IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
             iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
 
-            // Index all documents.
-            try (IndexWriter writer = new IndexWriter(FSDirectory.open(indexPath), iwc)) {
-                logger.info("Indexing files.");
+            // Index documents.
+            try (
+                Directory indexDirectory = FSDirectory.open(indexPath);
+                IndexWriter writer = new IndexWriter(indexDirectory, iwc)
+            ) {
+                if (!DirectoryReader.indexExists(indexDirectory) || indexAll) {
+                    // Recursively index all documents.
+                    logger.info("Indexing all files in target path.");
 
-                // Recursively index the documents.
-                writer.deleteAll();
-                indexDocuments(writer, indexPath, targetPath);
+                    writer.deleteAll();
+                    indexDocuments(writer, indexPath, targetPath);
 
-                logger.info("Finished indexing files.");
+                    logger.info("Finished indexing files.");
+                }
 
-                // TODO:
-                // Start watching for changes.
-                // delete
-                // ENTRY_CREATE – A directory entry is created. => index
-                // ENTRY_DELETE – A directory entry is deleted. => delete index
-                // ENTRY_MODIFY – A directory entry is modified. => index
+                // Watch for directory changes indefinitely.
+                logger.info("Watching for file changes...");
+                watchDirectory(writer, indexPath, targetPath);
 
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 logger.error(e.getMessage());
             }
 
@@ -124,6 +138,73 @@ public class FileIndexer {
     }
 
     /**
+     * Watch Directory
+     *
+     * Description: Watches a directory for files changes in order to automatically update indexes.
+     * @param {writer}     // The index writer.
+     * @param {indexPath}  // The destination path.
+     * @param {targetPath} // The target path.
+     */
+    static void watchDirectory(IndexWriter writer, Path indexPath, Path targetPath) throws IOException, InterruptedException {
+        WatchEvent.Kind<?> kind;
+        Path keyDirectory;
+        Path changedFile;
+        WatchKey key;
+
+        // Register the file watcher recursively.
+        final WatchService watcher = targetPath.getFileSystem().newWatchService();
+        final Map<WatchKey, Path> keys = new HashMap<>();
+
+        Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                keys.put(
+                    dir.register(watcher,
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_DELETE,
+                        StandardWatchEventKinds.ENTRY_MODIFY
+                    ), dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        // Poll watcher events.
+        while (true) {
+            key = watcher.take();
+            keyDirectory = keys.get(key);
+
+            for (WatchEvent<?> event: key.pollEvents()) {
+                kind = event.kind();
+
+                // Ignore discared events.
+                if (kind == StandardWatchEventKinds.OVERFLOW) {
+                    continue;
+                }
+
+                // Get the resolved file/folder name.
+                changedFile = keyDirectory.resolve(((WatchEvent<Path>)event).context());
+
+                // Handle created, modified, or deleted files.
+                if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    // (Re-)index the file.
+                    if (Files.isRegularFile(changedFile)) {
+                        indexDocuments(writer, indexPath, changedFile);
+                    }
+                } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                    // Delete any matching documents in index files.
+                    deleteFromIndex(writer, indexPath, changedFile);
+                }
+            }
+
+            // Reset the watch key. If the key is no longer valid, the directory is inaccessible.
+            if (!key.reset()) {
+                logger.error("Failed to reset WatchKey.");
+                return;
+            }
+        }
+    }
+
+    /**
      * Index Documents
      *
      * Description: Accepts a file or folder path and indexes the file(s).
@@ -136,14 +217,13 @@ public class FileIndexer {
             Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    writeIndex(writer, indexPath, file);
+                    writeToIndex(writer, indexPath, file);
                     return FileVisitResult.CONTINUE;
                 }
             });
         } else {
-            writeIndex(writer, indexPath, targetPath);
+            writeToIndex(writer, indexPath, targetPath);
         }
-        writer.commit();
     }
 
     /**
@@ -154,7 +234,7 @@ public class FileIndexer {
      * @param {indexPath}  // The destination path.
      * @param {targetPath} // The target path.
      */
-    static void writeIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+    static void writeToIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
         Document doc = new Document();
         String relativePath = indexPath.relativize(targetPath).toString();
         doc.add(new StringField("path", relativePath, Store.YES));
@@ -163,4 +243,18 @@ public class FileIndexer {
         logger.info(String.format("Indexed file `%s`", targetPath.toString()));
     }
 
+    /**
+     * Delete Index
+     *
+     * Description: Deletes documents from the indexes.
+     * @param {writer}     // The index writer.
+     * @param {indexPath}  // The destination path.
+     * @param {targetPath} // The target path.
+     */
+    static void deleteFromIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+        String relativePath = indexPath.relativize(targetPath).toString();
+        // TODO: Search for hits before reporting the deletion...
+        writer.deleteDocuments(new TermQuery(new Term("path", relativePath)));
+        logger.info(String.format("Deleted index for file `%s`", targetPath.toString()));
+    }
 }
