@@ -73,7 +73,7 @@ public class Search {
         try {
             // Open the index directory
             // TODO: Make the index directory configurable
-            Directory dir = FSDirectory.open(Paths.get("C:/vertx/indexes"));
+            Directory dir = FSDirectory.open(Paths.get("C:/sherlock/indexes"));
             IndexReader reader = DirectoryReader.open(dir);
             IndexSearcher searcher = new IndexSearcher(reader);
             Analyzer analyzer = new StandardAnalyzer();
