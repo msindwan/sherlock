@@ -35,54 +35,64 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class IndexOptions {
 
-    private Boolean indexAllFlag;
+    private Boolean forceFlag;
+    private Boolean deleteFlag;
+    private Boolean watchFlag;
     private Path targetPath;
     private Path indexPath;
     private Options options;
-    private int interval;
 
-    public static final int MAX_INTERVAL = 1000;
+    public static final String FORCE_FLAG_OPTION  = "force";
+    public static final String DELETE_FLAG_OPTION = "delete";
+    public static final String TARGET_PATH_OPTION = "target";
+    public static final String OUTPUT_PATH_OPTION = "output";
+    public static final String WATCH_FLAG_OPTION  = "watch";
 
     public IndexOptions() {
         this.options = new Options();
-        this.indexAllFlag = false;
+        this.forceFlag = false;
+        this.deleteFlag = false;
+        this.watchFlag = false;
 
         options.addOption("h", "help", false, "Show the help menu.");
 
-        Option interval = Option.builder("i")
-            .required(true)
-            .hasArg()
-            .longOpt("interval")
-            .desc("{integer} : Index files every `i` minutes.")
-            .build();
-
-        Option indexAll = Option.builder("a")
-            .longOpt("all")
+        Option forceFlag = Option.builder("f")
+            .longOpt(FORCE_FLAG_OPTION)
             .desc("Forces all files in the documents path to be (re-)indexed.")
             .build();
 
-        Option documents = Option.builder("d")
+        Option deleteFlag = Option.builder("d")
+            .longOpt(DELETE_FLAG_OPTION)
+            .desc("Forces all files in the documents path to be deleted from the indexes.")
+            .build();
+
+        Option watchFlag = Option.builder("w")
+            .longOpt(WATCH_FLAG_OPTION)
+            .desc("Watches files for changes.")
+            .build();
+
+        Option target = Option.builder("t")
             .required(true)
             .hasArg()
-            .longOpt("documents")
-            .desc("{absolute path} : Recursively index files in directory `d`.")
+            .longOpt(TARGET_PATH_OPTION)
+            .desc("{absolute path} : Recursively index files in this directory.")
             .build();
 
         Option output = Option.builder("o")
             .required(true)
             .hasArg()
-            .longOpt("output")
-            .desc("{absolute path} : Output the index files to directory `o`.")
+            .longOpt(OUTPUT_PATH_OPTION)
+            .desc("{absolute path} : Output the index files to this directory.")
             .build();
 
-        interval.setType(Number.class);
-        documents.setType(String.class);
+        target.setType(String.class);
         output.setType(String.class);
 
-        options.addOption(interval);
-        options.addOption(documents);
+        options.addOption(forceFlag);
+        options.addOption(deleteFlag);
+        options.addOption(watchFlag);
+        options.addOption(target);
         options.addOption(output);
-        options.addOption(indexAll);
     }
 
     public Path getTargetPath() {
@@ -93,12 +103,16 @@ public class IndexOptions {
         return indexPath;
     }
 
-    public int getInterval() {
-        return interval;
+    public boolean hasForceFlag() {
+        return forceFlag;
     }
 
-    public boolean getIndexAllFlag() {
-        return indexAllFlag;
+    public boolean hasDeleteFlag() {
+        return deleteFlag;
+    }
+
+    public boolean hasWatchFlag() {
+        return watchFlag;
     }
 
     public boolean hasHelpOption(String[] args) throws ParseException {
@@ -121,9 +135,8 @@ public class IndexOptions {
         parser = new BasicParser();
         cmd = parser.parse(options, args);
 
-        int i = ((Number)cmd.getParsedOptionValue("interval")).intValue();
-        Path target = Paths.get(cmd.getOptionValue("documents"));
-        Path index  = Paths.get(cmd.getOptionValue("output"));
+        Path target = Paths.get(cmd.getOptionValue(TARGET_PATH_OPTION));
+        Path index  = Paths.get(cmd.getOptionValue(OUTPUT_PATH_OPTION));
 
         // Check if the path to index exists.
         if (!Files.exists(target)) {
@@ -133,26 +146,11 @@ public class IndexOptions {
             ));
         }
 
-        // Check if the indexer can write to the specified path.
-        if (!Files.isWritable(index)) {
-            throw new InvalidOptionException(String.format(
-                "[Invalid Option] Cannot write to `%s`: Path does not exist or permission denied.",
-                cmd.getOptionValue("output")
-            ));
-        }
-
-        // Check if the interval is within bounds.
-        if (i <= 0 || i > MAX_INTERVAL) {
-            throw new InvalidOptionException(String.format(
-                "[Invalid Option] Interval must be within 0 and %d.",
-                MAX_INTERVAL
-            ));
-        }
-
-        interval = i;
         targetPath = target;
         indexPath = index;
-        indexAllFlag = cmd.hasOption("a");
+        forceFlag = cmd.hasOption(FORCE_FLAG_OPTION);
+        deleteFlag = cmd.hasOption(DELETE_FLAG_OPTION);
+        watchFlag = cmd.hasOption(WATCH_FLAG_OPTION);
     }
 
     public void printHelp() {

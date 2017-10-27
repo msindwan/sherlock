@@ -113,6 +113,7 @@ public class Search {
                     matches.add(frag);
                 }
 
+                // TODO: relativize this if possible.
                 match.put("path",  doc.get("path"));
                 match.put("frags", matches);
                 responseArray.add(match);

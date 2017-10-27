@@ -95,31 +95,42 @@ public class FileIndexer {
 
             Path targetPath  = options.getTargetPath();
             Path indexPath   = options.getIndexPath();
-            Boolean indexAll = options.getIndexAllFlag();
 
             // IndexWriter Configuration.
             Analyzer analyzer = new StandardAnalyzer();
             IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
             iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
 
-            // Index documents.
+            // Handle documents.
             try (
                 Directory indexDirectory = FSDirectory.open(indexPath);
                 IndexWriter writer = new IndexWriter(indexDirectory, iwc)
             ) {
-                if (!DirectoryReader.indexExists(indexDirectory) || indexAll) {
+                Boolean indexExists = DirectoryReader.indexExists(indexDirectory);
+
+                if (options.hasDeleteFlag()) {
+                    // Ensure that indexes exist.
+                    if (!indexExists) {
+                        logger.info(String.format("No indexes found in `%s`", indexPath.toString()));
+                    } else {
+                        // Delete all indexes.
+                        DeleteDocuments(writer, indexPath, targetPath);
+                        logger.info("Deleted all documents from index path.");
+                    }
+                }
+
+                if (!indexExists || options.hasForceFlag()) {
                     // Recursively index all documents.
                     logger.info("Indexing all files in target path.");
-
-                    writer.deleteAll();
                     indexDocuments(writer, indexPath, targetPath);
-
                     logger.info("Finished indexing files.");
                 }
 
-                // Watch for directory changes indefinitely.
-                logger.info("Watching for file changes...");
-                watchDirectory(writer, indexPath, targetPath);
+                if (options.hasWatchFlag()) {
+                    // Watch for directory changes indefinitely.
+                    logger.info("Watching for file changes...");
+                    watchDirectory(writer, indexPath, targetPath);
+                }
 
             } catch (IOException | InterruptedException e) {
                 logger.error(e.getMessage());
@@ -173,27 +184,32 @@ public class FileIndexer {
             key = watcher.take();
             keyDirectory = keys.get(key);
 
-            for (WatchEvent<?> event: key.pollEvents()) {
-                kind = event.kind();
+            try {
+                for (WatchEvent<?> event: key.pollEvents()) {
+                    kind = event.kind();
 
-                // Ignore discared events.
-                if (kind == StandardWatchEventKinds.OVERFLOW) {
-                    continue;
-                }
-
-                // Get the resolved file/folder name.
-                changedFile = keyDirectory.resolve(((WatchEvent<Path>)event).context());
-
-                // Handle created, modified, or deleted files.
-                if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                    // (Re-)index the file.
-                    if (Files.isRegularFile(changedFile)) {
-                        indexDocuments(writer, indexPath, changedFile);
+                    // Ignore discared events.
+                    if (kind == StandardWatchEventKinds.OVERFLOW) {
+                        continue;
                     }
-                } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                    // Delete any matching documents in index files.
-                    deleteFromIndex(writer, indexPath, changedFile);
+
+                    // Get the resolved file/folder name.
+                    changedFile = keyDirectory.resolve(((WatchEvent<Path>)event).context());
+
+                    // Handle created, modified, or deleted files.
+                    if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                        // (Re-)index the file.
+                        if (Files.isRegularFile(changedFile)) {
+                            indexDocuments(writer, indexPath, changedFile);
+                        }
+                    } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                        // Delete any matching documents in index files.
+                        deleteFromIndex(writer, indexPath, changedFile);
+                    }
+                    writer.commit();
                 }
+            } catch (IOException e) {
+                logger.warn(e.getMessage());
             }
 
             // Reset the watch key. If the key is no longer valid, the directory is inaccessible.
@@ -227,6 +243,28 @@ public class FileIndexer {
     }
 
     /**
+     * Delete Documents
+     *
+     * Description: Accepts a file or folder path and deletes all documents from the indexes.
+     * @param {writer}     // The index writer.
+     * @param {indexPath}  // The destination path.
+     * @param {targetPath} // The target path.
+     */
+    static void DeleteDocuments(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+        if (Files.isDirectory(targetPath)) {
+            Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    deleteFromIndex(writer, indexPath, file);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } else {
+            deleteFromIndex(writer, indexPath, targetPath);
+        }
+    }
+
+    /**
      * Write Index
      *
      * Description: Writes a document to a single index file.
@@ -236,10 +274,10 @@ public class FileIndexer {
      */
     static void writeToIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
         Document doc = new Document();
-        String relativePath = indexPath.relativize(targetPath).toString();
-        doc.add(new StringField("path", relativePath, Store.YES));
+        String path = targetPath.toString();
+        doc.add(new StringField("path", path, Store.YES));
         doc.add(new TextField("contents", new String(Files.readAllBytes(targetPath)), Store.YES));
-        writer.updateDocument(new Term("path", relativePath), doc);
+        writer.updateDocument(new Term("path", path), doc);
         logger.info(String.format("Indexed file `%s`", targetPath.toString()));
     }
 
@@ -252,9 +290,9 @@ public class FileIndexer {
      * @param {targetPath} // The target path.
      */
     static void deleteFromIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
-        String relativePath = indexPath.relativize(targetPath).toString();
         // TODO: Search for hits before reporting the deletion...
-        writer.deleteDocuments(new TermQuery(new Term("path", relativePath)));
-        logger.info(String.format("Deleted index for file `%s`", targetPath.toString()));
+        String path = targetPath.toString();
+        writer.deleteDocuments(new TermQuery(new Term("path", path)));
+        logger.info(String.format("Deleted index for file `%s`", path));
     }
 }
