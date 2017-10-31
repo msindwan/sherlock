@@ -9,14 +9,18 @@
 
 import React from 'react';
 
-const Crums = ({ path, onCrumClick }) => (
+const Crums = ({ path, onCrumClick, isFile }) => (
     <div className="crums-nav">
     {
         path.map((crum, i) => {
             return (
                 <div key={i}
-                    onClick={(e) => { onCrumClick(e, i); }}
-                    className="crum">
+                    onClick={(e) => {
+                        if (!isFile || i < path.length - 1) {
+                            onCrumClick(e, i); }
+                        }
+                    }
+                    className={`crum ${isFile && i == path.length - 1 ? '' : 'crum-folder'}`}>
                         { i > 0 && (<div className="crum-separator">/</div>) }
                         <div className="crum-value">{crum}</div>
                 </div>

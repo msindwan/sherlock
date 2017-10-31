@@ -15,6 +15,9 @@
  */
 package io.sherlock.core;
 
+import io.sherlock.common.options.IndexOptions;
+import io.sherlock.common.options.InvalidOptionException;
+
 import io.sherlock.core.handlers.Search;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;

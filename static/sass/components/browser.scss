@@ -1,17 +1,147 @@
-.file-browser-cell {
-    padding: 12px;
-    font-size: 14px;
-    border-bottom: 1px solid #dedede;
-    cursor: pointer;
+.file-browser-container {
 
-    &:hover {
-        background: #fff5f5;
+    transition: opacity 0.2s ease;
+
+    &.loading {
+        opacity: 0.5;
+        pointer-events: none;
     }
 
-    .fa-folder,
-    .fa-file-o {
-        margin-right: 6px;
-        color: #cf5b5b;
-        font-size: 14px;
+    .search-bar {
+        display: flex;
+        width: 100%;
+        height: 40px;
+        margin-bottom: 10px;
+
+        input {
+            width: 100%;
+            padding: 0px 10px;
+            float: left;
+            font: inherit;
+            border: 0;
+            background: #eee;
+            -moz-border-radius: 3px 0 0 3px;
+            -webkit-border-radius: 3px 0 0 3px;
+            border-radius: 3px 0 0 3px;
+            height: 100%;
+            outline: 0;
+        }
+
+        button {
+            border: 0;
+            padding: 0px;
+            cursor: pointer;
+            height: 100%;
+            width: 100px;
+            color: #fff;
+            text-transform: uppercase;
+            background: #cf5b5b;
+            -moz-border-radius: 0 3px 3px 0;
+            -webkit-border-radius: 0 3px 3px 0;
+            border-radius: 0 3px 3px 0;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+        }
     }
+
+    .file-browser {
+
+        overflow: auto;
+
+        .crums-nav {
+            margin-top: 10px;
+            margin-bottom: 20px;
+
+            .crum {
+                display: inline-block;
+
+                .crum-separator {
+                    display: inline-block;
+                    margin-left: 5px;
+                    margin-right: 5px;
+                }
+
+                .crum-value {
+                    display: inline-block;
+                }
+
+                &.crum-folder {
+                    .crum-value {
+                        cursor: pointer;
+                        color: #cf5b5b;
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+        }
+
+        .file-browser-placeholder {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 20px;
+        }
+
+        .file-browser-cell {
+            padding: 12px;
+            font-size: 14px;
+            border-bottom: 1px solid #dedede;
+            cursor: pointer;
+            white-space: nowrap;
+
+            &:hover {
+                background: #fff5f5;
+            }
+
+            .fa-folder,
+            .fa-file-o {
+                margin-right: 6px;
+                color: #cf5b5b;
+                font-size: 14px;
+            }
+
+            .file-browser-cell-path {
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+
+            table {
+                width: 100%;
+            }
+
+            .file-browser-cell-frag {
+
+                font-family: monospace;
+
+                &:hover {
+                    background: #fce2e2;
+                    cursor: pointer;
+                }
+
+                b {
+                    color: #cf5b5b;
+                }
+
+                .file-browser-cell-line {
+                    padding-right: 15px;
+                    font-weight: bold;
+                }
+
+                .file-browser-cell-text {
+                    width: 100%;
+                }
+            }
+        }
+
+        span.react-syntax-highlighter-line-number {
+            padding-left: 10px;
+            cursor: pointer;
+            padding-right: 10px;
+
+            &.active {
+                background: #efbebe;
+            }
+        }
+    }
+
 }

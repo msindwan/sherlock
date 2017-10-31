@@ -9,6 +9,12 @@
 
 class SherlockUtils {
 
+    /**
+     * Get Query Parameters
+     *
+     * Description: Fetches the query parameters for the current page.
+     * @returns An object with decoded query parameter mappings.
+     */
     static getQueryParams(){
         let lookup,
             params,
@@ -28,22 +34,34 @@ class SherlockUtils {
         return lookup;
     }
 
-    static isEmptyString(str) {
-        return (!str || /^\s*$/.test(str));
-    }
-
+    /**
+     * Get File Extenstion
+     *
+     * Description: Extracts the extenstion from a path string.
+     * @returns The extenstion as a string without the period.
+     */
     static getFileExtension(path) {
-        const i = path.lastIndexOf(".");
-        const ext = i > 0 ? path.substring(i + 1, path.length) : null;
-        return ext;
+        return path.substring(path.lastIndexOf(".") + 1, path.length);
     }
 
-
-    static saveHistory(queries=[]) {
+    /**
+     * Save History
+     *
+     * Saves the history using the specified query parameters.
+     * @param {queries}        // An arary of query parameters.
+     * @param {replaceHistory} // If true, replaces the history.
+     */
+    static saveHistory(queries=[], replaceHistory=false) {
+        const params = SherlockUtils.getQueryParams();
+        let isSamePage = true;
         let search = '';
-        var len = queries.length;
 
-        for (var i = 0; i < len; i++) {
+        if (Object.keys(params).length !== queries.length) {
+            isSamePage = false;
+        }
+
+        // Build the query string.
+        for (let i = 0; i < queries.length; i++) {
             let key = queries[i][0];
             let value = queries[i][1];
 
@@ -52,32 +70,17 @@ class SherlockUtils {
             } else {
                 search += `&${key}=${value}`;
             }
-
+            isSamePage &= params[key] === value;
         }
         search = encodeURI(search);
-        if (window.location.search !== search) {
-            history.pushState({}, '', `/${search}`);
-        }
-    }
 
-    static replaceHistory(queries=[]) {
-        let search = '';
-        var len = queries.length;
-
-        for (var i = 0; i < len; i++) {
-            let key = queries[i][0];
-            let value = queries[i][1];
-
-            if (i == 0) {
-                search += `?${key}=${value}`;
+        // Only make changes if the url is different.
+        if (!isSamePage) {
+            if (!replaceHistory) {
+                history.pushState({}, '', `/${search}`);
             } else {
-                search += `&${key}=${value}`;
+                history.replaceState({}, '', `/${search}`);
             }
-
-        }
-        search = encodeURI(search);
-        if (window.location.search !== search) {
-            history.replaceState({}, '', `/${search}`);
         }
     }
 

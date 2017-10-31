@@ -15,6 +15,8 @@
  */
 package io.sherlock.core.handlers;
 
+import io.sherlock.core.util.PathUtil;
+
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
@@ -53,6 +55,9 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
+import java.util.Map;
+import java.util.HashMap;
+
 /**
  * Search:
  * Defines handlers for search capabilities.
@@ -60,8 +65,10 @@ import java.io.InputStreamReader;
 public class Search {
 
     /**
-     * searchFiles
-     * @description: Searches files given a set of keywords.
+     * Search Files
+     *
+     * Description: Searches files given a set of keywords.
+     * @param {routingContext} // The vertx routing context.
      */
     public static void searchFiles(RoutingContext routingContext) {
         HttpServerRequest request;
@@ -77,7 +84,7 @@ public class Search {
             IndexReader reader = DirectoryReader.open(dir);
             IndexSearcher searcher = new IndexSearcher(reader);
             Analyzer analyzer = new StandardAnalyzer();
-            QueryParser qp = new QueryParser("contents", analyzer);
+            QueryParser qp = new QueryParser("text", analyzer);
 
             // TODO: Handle null
             String queryString = request.getParam("query");
@@ -98,26 +105,39 @@ public class Search {
             JsonArray matches;
             JsonObject match;
             String[] frags;
+            String path;
             Document doc;
+
+            Map<String, JsonObject> results = new HashMap<>();
 
             //Iterate over found results
             for (ScoreDoc score : hits.scoreDocs)
             {
-                match = new JsonObject();
                 doc = searcher.doc(score.doc);
-                stream = TokenSources.getAnyTokenStream(reader, score.doc, "contents", analyzer);
-                frags = highlighter.getBestFragments(stream, doc.get("contents"), 10);
+                path = Paths.get("C://projects").relativize(Paths.get(doc.get("path"))).toString();
+                // getLineNumber
 
-                matches = new JsonArray();
-                for (String frag: frags) {
-                    matches.add(frag);
+                if (results.containsKey(path)) {
+                    match = results.get(path);
+                    matches = match.getJsonArray("frags");
+                } else {
+                    match = new JsonObject();
+                    matches = new JsonArray();
+                    // TODO: relativize this if possible.
+                    match.put("path",  path);
+                    match.put("frags", matches);
+                    results.put(path, match);
+                    responseArray.add(match);
                 }
 
-                // TODO: relativize this if possible.
-                match.put("path",  doc.get("path"));
-                match.put("frags", matches);
-                responseArray.add(match);
+                stream = TokenSources.getAnyTokenStream(reader, score.doc, "text", analyzer);
+                frags = highlighter.getBestFragments(stream, doc.get("text"), 100);
 
+                JsonObject object = new JsonObject();
+                object.put("frag", frags[0]);
+                object.put("line", doc.get("line"));
+
+                matches.add(object);
             }
 
             routingContext.response()
@@ -187,27 +207,15 @@ public class Search {
 
 
     public static void getFile(RoutingContext routingContext) {
-        HttpServerRequest request;
-        String path;
-        File root;
-
         // TODO: Make the root configurable.
-        root = new File("C://Projects/");
-        request = routingContext.request();
-        path = request.getParam("path");
-
-        // Parse the folder path if provided.
-        // TODO: Make path required and verify that it's a file.
-        if (path != null) {
-            JsonArray jsonarray = new JsonArray(path);
-            for (int i = 0; i < jsonarray.size(); i++) {
-                root = new File(root, jsonarray.getString(i));
-            }
-        }
-
         routingContext.response()
             .putHeader("content-type", "text/plain")
-            .sendFile(root.getAbsolutePath());
+            .sendFile(
+                PathUtil.fromJSONString(
+                    "C://Projects/",
+                    routingContext.request().getParam("path")
+                )
+            );
     }
 
 }

@@ -53,7 +53,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.PrefixQuery;
 
 import org.apache.commons.cli.ParseException;
 
@@ -67,6 +67,10 @@ import java.nio.file.WatchKey;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.File;
 
 /**
  * FileIndexer:
@@ -114,7 +118,7 @@ public class FileIndexer {
                         logger.info(String.format("No indexes found in `%s`", indexPath.toString()));
                     } else {
                         // Delete all indexes.
-                        DeleteDocuments(writer, indexPath, targetPath);
+                        deleteDocuments(writer, indexPath, targetPath);
                         logger.info("Deleted all documents from index path.");
                     }
                 }
@@ -200,11 +204,13 @@ public class FileIndexer {
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                         // (Re-)index the file.
                         if (Files.isRegularFile(changedFile)) {
-                            indexDocuments(writer, indexPath, changedFile);
+                            writeToIndex(writer, indexPath, changedFile);
+                            logger.info(String.format("Updated index for file `%s`", changedFile.toString()));
                         }
                     } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                         // Delete any matching documents in index files.
                         deleteFromIndex(writer, indexPath, changedFile);
+                        logger.info(String.format("Deleted index for file `%s`", changedFile.toString()));
                     }
                     writer.commit();
                 }
@@ -234,11 +240,13 @@ public class FileIndexer {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     writeToIndex(writer, indexPath, file);
+                    logger.info(String.format("Indexed file `%s`", file.toString()));
                     return FileVisitResult.CONTINUE;
                 }
             });
         } else {
             writeToIndex(writer, indexPath, targetPath);
+            logger.info(String.format("Indexed file `%s`", targetPath.toString()));
         }
     }
 
@@ -250,17 +258,19 @@ public class FileIndexer {
      * @param {indexPath}  // The destination path.
      * @param {targetPath} // The target path.
      */
-    static void DeleteDocuments(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+    static void deleteDocuments(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
         if (Files.isDirectory(targetPath)) {
             Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     deleteFromIndex(writer, indexPath, file);
+                    logger.info(String.format("Deleted index for file `%s`", file.toString()));
                     return FileVisitResult.CONTINUE;
                 }
             });
         } else {
             deleteFromIndex(writer, indexPath, targetPath);
+            logger.info(String.format("Deleted index for file `%s`", targetPath.toString()));
         }
     }
 
@@ -273,12 +283,21 @@ public class FileIndexer {
      * @param {targetPath} // The target path.
      */
     static void writeToIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
-        Document doc = new Document();
         String path = targetPath.toString();
-        doc.add(new StringField("path", path, Store.YES));
-        doc.add(new TextField("contents", new String(Files.readAllBytes(targetPath)), Store.YES));
-        writer.updateDocument(new Term("path", path), doc);
-        logger.info(String.format("Indexed file `%s`", targetPath.toString()));
+        File file = new File(path);
+        String line = null;
+        int i = 0;
+
+        try ( BufferedReader br = new BufferedReader(new FileReader(file)) ) {
+            deleteFromIndex(writer, indexPath, targetPath);
+            while ((line = br.readLine()) != null) {
+                Document doc = new Document();
+                doc.add(new StringField("path", path, Store.YES));
+                doc.add(new TextField("text", line, Store.YES));
+                doc.add(new StoredField("line", ++i));
+                writer.addDocument(doc);
+            }
+        }
     }
 
     /**
@@ -290,9 +309,7 @@ public class FileIndexer {
      * @param {targetPath} // The target path.
      */
     static void deleteFromIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
-        // TODO: Search for hits before reporting the deletion...
         String path = targetPath.toString();
-        writer.deleteDocuments(new TermQuery(new Term("path", path)));
-        logger.info(String.format("Deleted index for file `%s`", path));
+        writer.deleteDocuments(new Term("path", path));
     }
 }

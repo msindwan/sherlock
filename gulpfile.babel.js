@@ -34,7 +34,7 @@ let server = null;
 
 gulp.task('js', 'Builds the javascript files.', () => {
     // Bundles the javascript into a single module.
-    let b = browserify({
+    const b = browserify({
       cache: {},
       debug: !IS_PRODUCTION,
       entries: JS_ENTRY,
@@ -115,6 +115,9 @@ gulp.task('clean', 'Cleans the build folder', (cb) => {
 gulp.task('default', 'Builds all of the modules.', ['server'], () => {
     gulp.src([EXT + "/fonts/**/*"])
         .pipe(gulp.dest(DIST + "/fonts"));
+
+    gulp.src([EXT + "/font-awesome-4.7.0/**/*"])
+        .pipe(gulp.dest(DIST + "/font-awesome-4.7.0"));
 
     gulp.src([INDEX]).pipe(gulp.dest(DIST));
     if (!IS_PRODUCTION) {
