@@ -3,7 +3,8 @@
     src: url('/dist/fonts/Questrial-Regular.ttf');
 }
 @import "./containers/common.scss";
+@import "./containers/terms.scss";
 @import "./components/header.scss";
 @import "./components/footer.scss";
 @import "./components/browser.scss";
-@import "./components/terms.scss";
+@import "./components/error.scss";

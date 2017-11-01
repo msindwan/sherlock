@@ -14,6 +14,7 @@ import SherlockAPI from '../../common/api';
 import FileViewer from './FileViewer';
 import FileBrowser from './FileBrowser';
 import SearchViewer from './SearchViewer';
+import ErrorMessage from '../common/ErrorMessage';
 import Crums from './Crums';
 
 const Browser = React.createClass({
@@ -26,7 +27,8 @@ const Browser = React.createClass({
             language: null,
             file: null,
             files: [],
-            root: []
+            root: [],
+            error: null
         };
     },
 
@@ -44,6 +46,7 @@ const Browser = React.createClass({
      */
     setFilesState(path, files) {
         this.setState({
+            error: null,
             isLoading: false,
             searchResults: null,
             searchText: this.state.searchText,
@@ -71,6 +74,7 @@ const Browser = React.createClass({
      */
     setFileState(path, file, line) {
         this.setState({
+            error: null,
             isLoading: false,
             searchResults: null,
             searchText: this.state.searchText,
@@ -93,6 +97,7 @@ const Browser = React.createClass({
         if (searchText) {
             // Update the search text and results.
             this.setState({
+                error: null,
                 isLoading: false,
                 searchResults : searchResults,
                 searchText: searchText
@@ -184,7 +189,10 @@ const Browser = React.createClass({
             // TODO: Handle error.
             this.setFilesState(path, response.data);
         },  error => {
-            console.log(error);
+            this.setState({
+                isLoading: false,
+                error: error.message
+            });
         });
     },
 
@@ -200,8 +208,10 @@ const Browser = React.createClass({
         SherlockAPI.fetchFile(path, response => {
             this.setFileState(path, response.request.responseText, line);
         }, error => {
-            // TODO: Handle error.
-            console.log(error);
+            this.setState({
+                isLoading: false,
+                error: error.message
+            });
         });
     },
 
@@ -218,8 +228,10 @@ const Browser = React.createClass({
             SherlockAPI.searchFiles(searchText, response => {
                 this.setSearchState(searchText, response.data);
             }, error => {
-                // TODO: Handle error.
-                console.log(error);
+                this.setState({
+                    isLoading: false,
+                    error: error.message
+                });
             });
         } else {
             // Reset the search state.
@@ -282,7 +294,11 @@ const Browser = React.createClass({
     render() {
         let browserView;
 
-        if (this.state.searchResults !== null) {
+        if (this.state.error !== null) {
+            browserView = (
+                <ErrorMessage message={this.state.error} />
+            );
+        } else if (this.state.searchResults !== null) {
             // Browse search results.
             browserView = (
                 <div className="file-browser">

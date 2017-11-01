@@ -1,0 +1,21 @@
+.error {
+    background: #f9eceb;
+    padding: 5px 15px;
+    border-radius: 2px;
+    margin-top: 15px;
+
+    .title {
+        margin: 0;
+        padding: 10px;
+
+        .sub-title {
+            font-size: 20px;
+            font-weight: normal;
+        }
+    }
+
+    .fa-warning {
+        color: #cf5b5b;
+        margin-right: 10px;
+    }
+}

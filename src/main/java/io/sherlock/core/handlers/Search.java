@@ -149,6 +149,8 @@ public class Search {
         } catch (IOException | ParseException | InvalidTokenOffsetsException e) {
             // TODO: Handle exceptions
             e.printStackTrace();
+            routingContext.response()
+                .setStatusCode(500).end();
         }
     }
 
