@@ -1,9 +1,9 @@
 .file-browser-container {
 
-    transition: opacity 0.2s ease;
+    transition: opacity .2s ease;
 
     &.loading {
-        opacity: 0.5;
+        opacity: .5;
         pointer-events: none;
     }
 
@@ -15,13 +15,11 @@
 
         input {
             width: 100%;
-            padding: 0px 10px;
+            padding: 0 10px;
             float: left;
             font: inherit;
             border: 0;
             background: #eee;
-            -moz-border-radius: 3px 0 0 3px;
-            -webkit-border-radius: 3px 0 0 3px;
             border-radius: 3px 0 0 3px;
             height: 100%;
             outline: 0;
@@ -29,17 +27,15 @@
 
         button {
             border: 0;
-            padding: 0px;
+            padding: 0;
             cursor: pointer;
             height: 100%;
             width: 100px;
             color: #fff;
             text-transform: uppercase;
             background: #cf5b5b;
-            -moz-border-radius: 0 3px 3px 0;
-            -webkit-border-radius: 0 3px 3px 0;
             border-radius: 0 3px 3px 0;
-            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, .3);
         }
     }
 
@@ -68,6 +64,7 @@
                     .crum-value {
                         cursor: pointer;
                         color: #cf5b5b;
+
                         &:hover {
                             text-decoration: underline;
                         }
@@ -133,7 +130,7 @@
             }
         }
 
-        span.react-syntax-highlighter-line-number {
+        .react-syntax-highlighter-line-number {
             padding-left: 10px;
             cursor: pointer;
             padding-right: 10px;

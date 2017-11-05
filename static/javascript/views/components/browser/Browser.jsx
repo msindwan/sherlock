@@ -8,7 +8,6 @@
  **/
 
 import React from 'react';
-import axios from 'axios';
 import SherlockUtils from '../../common/util';
 import SherlockAPI from '../../common/api';
 import FileViewer from './FileViewer';
@@ -160,7 +159,7 @@ const Browser = React.createClass({
 
         // Bind event listeners.
         lineElems.forEach((elem, i) => {
-            elem.addEventListener('click', e => {
+            elem.addEventListener('click', () => {
                 // If the line is already set, reset and remove the old line
                 // number from the history.
                 if (typeof line !== 'undefined') {
@@ -191,7 +190,7 @@ const Browser = React.createClass({
         },  error => {
             this.setState({
                 isLoading: false,
-                error: error.message
+                error: error.response.data.message
             });
         });
     },
@@ -210,7 +209,7 @@ const Browser = React.createClass({
         }, error => {
             this.setState({
                 isLoading: false,
-                error: error.message
+                error: error.response.data.message
             });
         });
     },
@@ -230,7 +229,7 @@ const Browser = React.createClass({
             }, error => {
                 this.setState({
                     isLoading: false,
-                    error: error.message
+                    error: error.response.data.message
                 });
             });
         } else {

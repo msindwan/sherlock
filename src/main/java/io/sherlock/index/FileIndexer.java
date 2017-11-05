@@ -19,7 +19,6 @@ import io.sherlock.common.options.IndexOptions;
 import io.sherlock.common.options.InvalidOptionException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,33 +26,20 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static java.util.concurrent.TimeUnit.*;
-
-import org.apache.lucene.document.Document;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import java.util.concurrent.Executors;
-
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.PrefixQuery;
 
 import org.apache.commons.cli.ParseException;
 
@@ -76,14 +62,21 @@ import java.io.File;
  * FileIndexer:
  * Automatically indexes files for Sherlock.
  */
-public class FileIndexer {
+public final class FileIndexer {
 
-    static Logger logger = Logger.getLogger(FileIndexer.class.getName());
+    private static Logger logger = Logger.getLogger(FileIndexer.class.getName());
+
+    /**
+     * Hidden Constructor.
+     */
+    private FileIndexer() { }
 
     /**
      * Entry point.
+     *
+     * @param args // The command line arguments.
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final IndexOptions options = new IndexOptions();
         BasicConfigurator.configure();
 
@@ -97,8 +90,8 @@ public class FileIndexer {
             // Parse and validate arguments.
             options.parse(args);
 
-            Path targetPath  = options.getTargetPath();
-            Path indexPath   = options.getIndexPath();
+            Path targetPath  = Paths.get(options.getTargetPath());
+            Path indexPath   = Paths.get(options.getIndexPath());
 
             // IndexWriter Configuration.
             Analyzer analyzer = new StandardAnalyzer();
@@ -140,14 +133,12 @@ public class FileIndexer {
                 logger.error(e.getMessage());
             }
 
-        } catch (ParseException e) {
-            // Handle cli parse exceptions.
-            System.err.println(e.getMessage());
+        } catch (ParseException | InvalidOptionException e) {
+            // Handle cli exceptions.
+            System.err.println(String.format(
+                "Failed to process args: %s", e.getMessage())
+            );
             options.printHelp();
-            System.exit(1);
-        } catch (InvalidOptionException e) {
-            // Handle invalid index options.
-            System.err.println(e.getMessage());
             System.exit(1);
         }
     }
@@ -156,14 +147,17 @@ public class FileIndexer {
      * Watch Directory
      *
      * Description: Watches a directory for files changes in order to automatically update indexes.
-     * @param {writer}     // The index writer.
-     * @param {indexPath}  // The destination path.
-     * @param {targetPath} // The target path.
+     * @param writer                // The index writer.
+     * @param indexPath             // The destination path.
+     * @param targetPath            // The target path.
+     * @throws IOException          // Failure to wathc or open files/directories.
+     * @throws InterruptedException // Watching directories was interuppted.
      */
-    static void watchDirectory(IndexWriter writer, Path indexPath, Path targetPath) throws IOException, InterruptedException {
+    public static void watchDirectory(final IndexWriter writer, final Path indexPath, final Path targetPath)
+        throws IOException, InterruptedException {
+
         WatchEvent.Kind<?> kind;
         Path keyDirectory;
-        Path changedFile;
         WatchKey key;
 
         // Register the file watcher recursively.
@@ -172,7 +166,9 @@ public class FileIndexer {
 
         Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
+                throws IOException {
+
                 keys.put(
                     dir.register(watcher,
                         StandardWatchEventKinds.ENTRY_CREATE,
@@ -198,7 +194,8 @@ public class FileIndexer {
                     }
 
                     // Get the resolved file/folder name.
-                    changedFile = keyDirectory.resolve(((WatchEvent<Path>)event).context());
+                    @SuppressWarnings("unchecked")
+                    Path changedFile = keyDirectory.resolve(((WatchEvent<Path>) event).context());
 
                     // Handle created, modified, or deleted files.
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
@@ -230,15 +227,18 @@ public class FileIndexer {
      * Index Documents
      *
      * Description: Accepts a file or folder path and indexes the file(s).
-     * @param {writer}     // The index writer.
-     * @param {indexPath}  // The destination path.
-     * @param {targetPath} // The target path.
+     * @param writer       // The index writer.
+     * @param indexPath    // The destination path.
+     * @param targetPath   // The target path.
+     * @throws IOException // Failure to index documents.
      */
-    static void indexDocuments(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+    static void indexDocuments(final IndexWriter writer, final Path indexPath, final Path targetPath)
+        throws IOException {
+
         if (Files.isDirectory(targetPath)) {
             Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                     writeToIndex(writer, indexPath, file);
                     logger.info(String.format("Indexed file `%s`", file.toString()));
                     return FileVisitResult.CONTINUE;
@@ -254,15 +254,18 @@ public class FileIndexer {
      * Delete Documents
      *
      * Description: Accepts a file or folder path and deletes all documents from the indexes.
-     * @param {writer}     // The index writer.
-     * @param {indexPath}  // The destination path.
-     * @param {targetPath} // The target path.
+     * @param writer       // The index writer.
+     * @param indexPath    // The destination path.
+     * @param targetPath   // The target path.
+     * @throws IOException // Failure to delete documents.
      */
-    static void deleteDocuments(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+    static void deleteDocuments(final IndexWriter writer, final Path indexPath, final Path targetPath)
+        throws IOException {
+
         if (Files.isDirectory(targetPath)) {
             Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                     deleteFromIndex(writer, indexPath, file);
                     logger.info(String.format("Deleted index for file `%s`", file.toString()));
                     return FileVisitResult.CONTINUE;
@@ -278,17 +281,20 @@ public class FileIndexer {
      * Write Index
      *
      * Description: Writes a document to a single index file.
-     * @param {writer}     // The index writer.
-     * @param {indexPath}  // The destination path.
-     * @param {targetPath} // The target path.
+     * @param writer       // The index writer.
+     * @param indexPath    // The destination path.
+     * @param targetPath   // The target path.
+     * @throws IOException // Failure to write the index.
      */
-    static void writeToIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+    static void writeToIndex(final IndexWriter writer, final Path indexPath, final Path targetPath)
+        throws IOException {
+
         String path = targetPath.toString();
         File file = new File(path);
         String line = null;
         int i = 0;
 
-        try ( BufferedReader br = new BufferedReader(new FileReader(file)) ) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             deleteFromIndex(writer, indexPath, targetPath);
             while ((line = br.readLine()) != null) {
                 Document doc = new Document();
@@ -304,11 +310,14 @@ public class FileIndexer {
      * Delete Index
      *
      * Description: Deletes documents from the indexes.
-     * @param {writer}     // The index writer.
-     * @param {indexPath}  // The destination path.
-     * @param {targetPath} // The target path.
+     * @param writer       // The index writer.
+     * @param indexPath    // The destination path.
+     * @param targetPath   // The target path.
+     * @throws IOException // Failure to delete the index.
      */
-    static void deleteFromIndex(IndexWriter writer, Path indexPath, Path targetPath) throws IOException {
+    static void deleteFromIndex(final IndexWriter writer, final Path indexPath, final Path targetPath)
+        throws IOException {
+
         String path = targetPath.toString();
         writer.deleteDocuments(new Term("path", path));
     }

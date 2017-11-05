@@ -15,146 +15,157 @@
  */
 package io.sherlock.common.options;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 
-public class IndexOptions {
+/**
+ * IndexOptions:
+ * Options for the indexer.
+ */
+public class IndexOptions extends SherlockOptions {
 
-    private Boolean forceFlag;
     private Boolean deleteFlag;
+    private Boolean forceFlag;
     private Boolean watchFlag;
-    private Path targetPath;
-    private Path indexPath;
-    private Options options;
+    private String targetPath;
+    private String indexPath;
 
-    public static final String FORCE_FLAG_OPTION  = "force";
-    public static final String DELETE_FLAG_OPTION = "delete";
-    public static final String TARGET_PATH_OPTION = "target";
-    public static final String OUTPUT_PATH_OPTION = "output";
-    public static final String WATCH_FLAG_OPTION  = "watch";
+    public static final String FORCE_FLAG  = "force";
+    public static final String DELETE_FLAG = "delete";
+    public static final String TERGET_PATH = "target";
+    public static final String OUTPUT_PATH = "output";
+    public static final String WATCH_FLAG  = "watch";
 
+    private static final Option FORCE_FLAG_OPTION = Option.builder("f")
+        .longOpt(FORCE_FLAG)
+        .desc("Forces all files in the documents path to be (re-)indexed.")
+        .build();
+
+    private static final Option DELETE_FLAG_OPTION = Option.builder("d")
+        .longOpt(DELETE_FLAG)
+        .desc("Deleres all files in the documents path from the indexes.")
+        .build();
+
+    private static final Option WATCH_FLAG_OPTION = Option.builder("w")
+        .longOpt(WATCH_FLAG)
+        .desc("Watches files for changes.")
+        .build();
+
+    private static final Option TARGET_OPTION = Option.builder("t")
+        .required(true)
+        .hasArg()
+        .longOpt(TERGET_PATH)
+        .desc("{absolute path} : Recursively index files in this directory.")
+        .build();
+
+    private static final Option OUTPUT_OPTION = Option.builder("o")
+        .required(true)
+        .hasArg()
+        .longOpt(OUTPUT_PATH)
+        .desc("{absolute path} : Output the index files to this directory.")
+        .build();
+
+    /**
+     * Constructor.
+     */
     public IndexOptions() {
-        this.options = new Options();
+        super();
         this.forceFlag = false;
         this.deleteFlag = false;
         this.watchFlag = false;
+        this.targetPath = null;
+        this.indexPath = null;
 
-        options.addOption("h", "help", false, "Show the help menu.");
-
-        Option forceFlag = Option.builder("f")
-            .longOpt(FORCE_FLAG_OPTION)
-            .desc("Forces all files in the documents path to be (re-)indexed.")
-            .build();
-
-        Option deleteFlag = Option.builder("d")
-            .longOpt(DELETE_FLAG_OPTION)
-            .desc("Forces all files in the documents path to be deleted from the indexes.")
-            .build();
-
-        Option watchFlag = Option.builder("w")
-            .longOpt(WATCH_FLAG_OPTION)
-            .desc("Watches files for changes.")
-            .build();
-
-        Option target = Option.builder("t")
-            .required(true)
-            .hasArg()
-            .longOpt(TARGET_PATH_OPTION)
-            .desc("{absolute path} : Recursively index files in this directory.")
-            .build();
-
-        Option output = Option.builder("o")
-            .required(true)
-            .hasArg()
-            .longOpt(OUTPUT_PATH_OPTION)
-            .desc("{absolute path} : Output the index files to this directory.")
-            .build();
-
-        target.setType(String.class);
-        output.setType(String.class);
-
-        options.addOption(forceFlag);
-        options.addOption(deleteFlag);
-        options.addOption(watchFlag);
-        options.addOption(target);
-        options.addOption(output);
+        // Add the options.=
+        addOption(FORCE_FLAG_OPTION);
+        addOption(DELETE_FLAG_OPTION);
+        addOption(WATCH_FLAG_OPTION);
+        addOption(TARGET_OPTION);
+        addOption(OUTPUT_OPTION);
     }
 
-    public Path getTargetPath() {
+    /**
+     * Get Target Path
+     *
+     * Description: Getter for the terget path.
+     * @return the target path as a string.
+     */
+    public final String getTargetPath() {
         return targetPath;
     }
 
-    public Path getIndexPath() {
+    /**
+     * Get Index Path
+     *
+     * Description: Getter for the index path.
+     * @return the index path as a string.
+     */
+    public final String getIndexPath() {
         return indexPath;
     }
 
-    public boolean hasForceFlag() {
+    /**
+     * Has Force Flag
+     *
+     * Description: Getter for Force flag.
+     * @return true if the flag was provided; false otherwise
+     */
+    public final boolean hasForceFlag() {
         return forceFlag;
     }
 
-    public boolean hasDeleteFlag() {
+    /**
+     * Has Delete Flag
+     *
+     * Description: Getter for Delete flag.
+     * @return true if the flag was provided; false otherwise
+     */
+    public final boolean hasDeleteFlag() {
         return deleteFlag;
     }
 
-    public boolean hasWatchFlag() {
+    /**
+     * Has Watch Flag
+     *
+     * Description: Getter for watch flag.
+     * @return true if the flag was provided; false otherwise
+     */
+    public final boolean hasWatchFlag() {
         return watchFlag;
     }
 
-    public boolean hasHelpOption(String[] args) throws ParseException {
+    @Override
+    public final void parse(final String[] args)
+        throws ParseException, InvalidOptionException {
+
         CommandLineParser parser;
         CommandLine cmd;
-        Options help;
-
-        help = new Options();
-        help.addOption("h", "help", false, "Show the help menu.");
 
         parser = new DefaultParser();
-        cmd = parser.parse(help, args, true);
-        return cmd.hasOption("h");
-    }
+        cmd = parser.parse(getOptions(), args);
 
-    public void parse(String[] args) throws ParseException, InvalidOptionException {
-        CommandLineParser parser;
-        CommandLine cmd;
-
-        parser = new BasicParser();
-        cmd = parser.parse(options, args);
-
-        Path target = Paths.get(cmd.getOptionValue(TARGET_PATH_OPTION));
-        Path index  = Paths.get(cmd.getOptionValue(OUTPUT_PATH_OPTION));
+        String target = cmd.getOptionValue(TERGET_PATH);
+        String index  = cmd.getOptionValue(OUTPUT_PATH);
 
         // Check if the path to index exists.
-        if (!Files.exists(target)) {
+        if (!Files.exists(Paths.get(target))) {
             throw new InvalidOptionException(String.format(
-                "[Invalid Option] Cannot read `%s`: Path does not exist or permission denied.",
-                cmd.getOptionValue("documents")
+                "[Invalid Option] %s does not exist or permission denied.",
+                target
             ));
         }
 
+        // Apply the options.
         targetPath = target;
         indexPath = index;
-        forceFlag = cmd.hasOption(FORCE_FLAG_OPTION);
-        deleteFlag = cmd.hasOption(DELETE_FLAG_OPTION);
-        watchFlag = cmd.hasOption(WATCH_FLAG_OPTION);
-    }
-
-    public void printHelp() {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("Sherlock", options);
+        forceFlag = cmd.hasOption(FORCE_FLAG);
+        deleteFlag = cmd.hasOption(DELETE_FLAG);
+        watchFlag = cmd.hasOption(WATCH_FLAG);
     }
 }

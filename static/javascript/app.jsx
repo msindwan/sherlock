@@ -15,12 +15,12 @@ import React from 'react';
 
 // App entry point.
 window.addEventListener("load", function() {
-   ReactDOM.render((
-      <Router>
-          <Switch>
-              <Route exact path="/" component={SearchContainer}/>
-              <Route exact path="/terms" component={TermsContainer}/>
-          </Switch>
-      </Router>
-   ), document.getElementById("app"));
+    ReactDOM.render((
+        <Router>
+            <Switch>
+                <Route exact path="/" component={SearchContainer}/>
+                <Route exact path="/terms" component={TermsContainer}/>
+            </Switch>
+        </Router>
+    ), document.getElementById("app"));
 });

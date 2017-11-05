@@ -15,9 +15,19 @@
  */
 package io.sherlock.common.options;
 
+/**
+ * Invalid Option Exception:
+ * Custom invalid option exception.
+ */
+@SuppressWarnings("serial")
 public class InvalidOptionException extends Exception {
 
-    public InvalidOptionException(String message) {
+    /**
+     * Constructor.
+     *
+     * @param message // The exception message.
+     */
+    public InvalidOptionException(final String message) {
         super(message);
     }
 }

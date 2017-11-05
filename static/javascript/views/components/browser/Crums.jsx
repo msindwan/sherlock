@@ -17,9 +17,9 @@ const Crums = ({ path, onCrumClick, isFile }) => (
                 <div key={i}
                     onClick={(e) => {
                         if (!isFile || i < path.length - 1) {
-                            onCrumClick(e, i); }
+                            onCrumClick(e, i);
                         }
-                    }
+                    }}
                     className={`crum ${isFile && i == path.length - 1 ? '' : 'crum-folder'}`}>
                         { i > 0 && (<div className="crum-separator">/</div>) }
                         <div className="crum-value">{crum}</div>

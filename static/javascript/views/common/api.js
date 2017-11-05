@@ -7,7 +7,6 @@
  * Description : Defines a set of api functions.
  **/
 
-import SherlockUtils from './util';
 import axios from 'axios';
 
 class SherlockAPI {

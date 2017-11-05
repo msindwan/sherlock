@@ -15,10 +15,9 @@
  */
 package io.sherlock.core.handlers;
 
-import io.sherlock.core.util.PathUtil;
+import io.sherlock.common.util.FileUtil;
 
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -26,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Files;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -50,27 +50,40 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import java.util.ArrayList;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.util.Arrays;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 /**
  * Search:
  * Defines handlers for search capabilities.
  */
-public class Search {
+public final class Search {
+
+    private static final int MAX_FRAGMENT_SIZE = 100;
+    private static final int NUM_FRAGMENTS = 10;
+    private static final int NUM_HITS = 10;
+
+    /**
+     * Hidden Constructor.
+     */
+    private Search() { }
 
     /**
      * Search Files
      *
      * Description: Searches files given a set of keywords.
-     * @param {routingContext} // The vertx routing context.
+     * @param routingContext // The vertx routing context.
+     * @param indexes        // The indexes directory.
+     * @param root           // The root directory.
      */
-    public static void searchFiles(RoutingContext routingContext) {
+    public static void searchFiles(
+        final RoutingContext routingContext,
+        final String indexes,
+        final String root) {
+
         HttpServerRequest request;
         JsonArray responseArray;
 
@@ -79,24 +92,34 @@ public class Search {
 
         try {
             // Open the index directory
-            // TODO: Make the index directory configurable
-            Directory dir = FSDirectory.open(Paths.get("C:/sherlock/indexes"));
+            Directory dir = FSDirectory.open(Paths.get(indexes));
             IndexReader reader = DirectoryReader.open(dir);
             IndexSearcher searcher = new IndexSearcher(reader);
             Analyzer analyzer = new StandardAnalyzer();
             QueryParser qp = new QueryParser("text", analyzer);
 
-            // TODO: Handle null
             String queryString = request.getParam("query");
+
+            if (queryString == null) {
+                Handler.sendError(
+                    routingContext,
+                    Handler.HTTP_NOT_FOUND,
+                    "Missing field `query`"
+                );
+                return;
+            }
 
             // Create the query
             Query query = qp.parse(queryString);
 
-            TopDocs hits = searcher.search(query, 10);
+            TopDocs hits = searcher.search(query, NUM_HITS);
             Formatter formatter = new SimpleHTMLFormatter();
             QueryScorer scorer = new QueryScorer(query);
             Highlighter highlighter = new Highlighter(formatter, scorer);
-            Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 10);
+            Fragmenter fragmenter = new SimpleSpanFragmenter(
+                scorer,
+                NUM_FRAGMENTS
+            );
 
             //set fragmenter to highlighter
             highlighter.setTextFragmenter(fragmenter);
@@ -109,35 +132,54 @@ public class Search {
             Document doc;
 
             Map<String, JsonObject> results = new HashMap<>();
+            Path rootPath = Paths.get(root);
 
-            //Iterate over found results
-            for (ScoreDoc score : hits.scoreDocs)
-            {
+            // Iterate over found results.
+            for (ScoreDoc score : hits.scoreDocs) {
                 doc = searcher.doc(score.doc);
-                path = Paths.get("C://projects").relativize(Paths.get(doc.get("path"))).toString();
-                // getLineNumber
+                Path absolutePath = Paths.get(doc.get("path"));
 
-                if (results.containsKey(path)) {
-                    match = results.get(path);
-                    matches = match.getJsonArray("frags");
-                } else {
-                    match = new JsonObject();
-                    matches = new JsonArray();
-                    // TODO: relativize this if possible.
-                    match.put("path",  path);
-                    match.put("frags", matches);
-                    results.put(path, match);
-                    responseArray.add(match);
+                // Add results only if they exist under the root path.
+                if (absolutePath.startsWith(rootPath)) {
+
+                    path = rootPath.relativize(absolutePath).toString();
+
+                    // Group results by file path.
+                    if (results.containsKey(path)) {
+                        match = results.get(path);
+                        matches = match.getJsonArray("frags");
+                    } else {
+                        match = new JsonObject();
+                        matches = new JsonArray();
+
+                        // Add the match.
+                        String[] pList = path.split(
+                            Pattern.quote(File.separator)
+                        );
+                        match.put("path",  new JsonArray(Arrays.asList(pList)));
+                        match.put("frags", matches);
+                        results.put(path, match);
+                        responseArray.add(match);
+                    }
+
+                    stream = TokenSources.getTokenStream(
+                        "text",
+                        null,
+                        doc.get("text"),
+                        analyzer, -1
+                    );
+                    frags = highlighter.getBestFragments(
+                        stream,
+                        doc.get("text"),
+                        MAX_FRAGMENT_SIZE
+                    );
+
+                    // Add the fragment.
+                    JsonObject object = new JsonObject();
+                    object.put("frag", frags[0]);
+                    object.put("line", doc.get("line"));
+                    matches.add(object);
                 }
-
-                stream = TokenSources.getAnyTokenStream(reader, score.doc, "text", analyzer);
-                frags = highlighter.getBestFragments(stream, doc.get("text"), 100);
-
-                JsonObject object = new JsonObject();
-                object.put("frag", frags[0]);
-                object.put("line", doc.get("line"));
-
-                matches.add(object);
             }
 
             routingContext.response()
@@ -146,45 +188,55 @@ public class Search {
 
             dir.close();
 
-        } catch (IOException | ParseException | InvalidTokenOffsetsException e) {
-            // TODO: Handle exceptions
-            e.printStackTrace();
-            routingContext.response()
-                .setStatusCode(500).end();
+        } catch (
+            IOException
+            | ParseException
+            | InvalidTokenOffsetsException e
+        ) {
+            Handler.sendError(
+                routingContext,
+                Handler.HTTP_INTERNAL_SERVER_ERROR,
+                "Failed to search files."
+            );
         }
     }
 
     /**
-     * listFileFolders
-     * @description: Responds with a list of files and folders for the
-     * specified path.
+     * List Files and Folders
+     *
+     * Description: Responds with a list of files and folders for the path.
+     * @param routingContext // The vertx routing context.
+     * @param root           // The root directory.
      */
-    public static void listFileFolders(RoutingContext routingContext) {
+    public static void listFileFolders(
+        final RoutingContext routingContext,
+        final String root) {
+
         ArrayList<JsonObject> files;
         HttpServerRequest request;
         JsonArray responseArray;
+        File targetDirectory;
         String path;
-        File root;
 
-        // TODO: Make the root configurable.
-        root = new File("C://Projects/");
-        request = routingContext.request();
-        path = request.getParam("path");
+        path = FileUtil.pathFromJSONString(
+            root,
+            routingContext.request().getParam("path")
+        );
+        if (path == null || !Files.isDirectory(Paths.get(path))) {
+            Handler.sendError(
+                routingContext,
+                Handler.HTTP_NOT_FOUND,
+                "Path not found."
+            );
+            return;
+        }
 
+        targetDirectory = new File(path);
         responseArray = new JsonArray();
         files = new ArrayList<>();
 
-        // Parse the folder path if provided.
-        if (path != null) {
-            JsonArray jsonarray = new JsonArray(path);
-            for (int i = 0; i < jsonarray.size(); i++) {
-                root = new File(root, jsonarray.getString(i));
-            }
-        }
-
         // Iterate through files and create response objects.
-        // TODO: Handle folderPath that isn't a folder.
-        for (File file : root.listFiles()) {
+        for (File file : targetDirectory.listFiles()) {
             JsonObject object = new JsonObject();
             object.put("filename", file.getName());
             object.put("isDir", file.isDirectory());
@@ -207,17 +259,27 @@ public class Search {
             .end(responseArray.encode());
     }
 
+    /**
+     * Get File
+     *
+     * Description: Responds with the contents of a file.
+     * @param routingContext // The vertx routing context.
+     * @param root           // The root directory.
+     */
+    public static void getFile(
+        final RoutingContext routingContext,
+        final String root) {
 
-    public static void getFile(RoutingContext routingContext) {
-        // TODO: Make the root configurable.
-        routingContext.response()
-            .putHeader("content-type", "text/plain")
-            .sendFile(
-                PathUtil.fromJSONString(
-                    "C://Projects/",
-                    routingContext.request().getParam("path")
-                )
-            );
+        String path = FileUtil.pathFromJSONString(
+            root,
+            routingContext.request().getParam("path")
+        );
+        if (path == null) {
+            Handler.sendError(routingContext, Handler.HTTP_NOT_FOUND, "Path not found.");
+        } else {
+            routingContext.response()
+                .sendFile(path);
+        }
     }
 
 }

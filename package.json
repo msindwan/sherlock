@@ -1,15 +1,16 @@
 {
   "name": "sherlock",
   "version": "1.0.0",
-  "description": "",
+  "description": "Provides an interface to browse or search files.",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@bitbucket.org/msindwan/sherlock.git"
   },
   "author": "Mayank Sindwani",
-  "license": "MIT",
+  "license": "Apache License, Version 2.0",
   "homepage": "https://bitbucket.org/msindwan/sherlock#readme",
   "devDependencies": {
+    "axios": "^0.16.2",
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
     "babelify": "^7.3.0",
@@ -32,14 +33,11 @@
     "ps-tree": "^1.1.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
+    "react-router": "^4.2.0",
+    "react-router-dom": "^4.2.2",
+    "react-syntax-highlighter": "^5.7.1",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.6.1"
-  },
-  "dependencies": {
-    "axios": "^0.16.2",
-    "react-router": "^4.2.0",
-    "react-router-dom": "^4.2.2",
-    "react-syntax-highlighter": "^5.7.1"
   }
 }

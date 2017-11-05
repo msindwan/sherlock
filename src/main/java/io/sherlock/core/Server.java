@@ -15,8 +15,10 @@
  */
 package io.sherlock.core;
 
-import io.sherlock.common.options.IndexOptions;
+import io.sherlock.common.options.ServerOptions;
 import io.sherlock.common.options.InvalidOptionException;
+
+import org.apache.commons.cli.ParseException;
 
 import io.sherlock.core.handlers.Search;
 import io.vertx.core.http.HttpServerResponse;
@@ -36,21 +38,51 @@ import java.util.function.Consumer;
  */
 public class Server extends AbstractVerticle {
 
-    public static void main(String[] args) {
+    /**
+     * Entry point.
+     *
+     * @param args // The command line arguments.
+     */
+    public static void main(final String[] args) {
         DeploymentOptions deploymentOptions;
+        ServerOptions serverOptions;
         Consumer<Vertx> runner;
         VertxOptions options;
         JsonObject config;
 
-        // Update the cwd.
-        System.setProperty("vertx.cwd", "/src/main/java");
-
-        // TODO: Parse deployment options.
         deploymentOptions = new DeploymentOptions();
+        serverOptions = new ServerOptions();
         options = new VertxOptions();
         config = new JsonObject();
 
+        // Update the cwd.
+        System.setProperty("vertx.cwd", "/src/main/java");
+
+        // Set the configuration options.
         deploymentOptions.setConfig(config);
+
+        try {
+            // Check if the help menu needs to be printed.
+            if (serverOptions.hasHelpOption(args)) {
+                serverOptions.printHelp();
+                System.exit(0);
+            }
+
+            // Parse and validate arguments.
+            serverOptions.parse(args);
+            config.put("root", serverOptions.getRoot());
+            config.put("indexes", serverOptions.getIndexes());
+            config.put("port", serverOptions.getPort());
+
+        } catch (ParseException | InvalidOptionException e) {
+            // Handle cli exceptions.
+            System.err.println(String.format(
+                "Failed to process args: %s",
+                e.getMessage())
+            );
+            serverOptions.printHelp();
+            System.exit(1);
+        }
 
         // Define and deploy vertx.
         runner = vertx -> {
@@ -77,20 +109,26 @@ public class Server extends AbstractVerticle {
     }
 
     @Override
-    public void start() {
+    public final void start() {
         // Get server options.
-        Boolean cacheEnabled = config().getBoolean("cacheEnabled", true);
-        int port = config().getInteger("port", 8080);
+        final String indexes = config().getString("indexes");
+        final String root = config().getString("root");
 
         // Route endpoints.
         Router router = Router.router(vertx);
-        router.get("/api/search").handler(Search::searchFiles);
-        router.get("/api/search/file").handler(Search::getFile);
-        router.get("/api/search/files").handler(Search::listFileFolders);
+        router.get("/api/search").handler(r -> {
+            Search.searchFiles(r, indexes, root);
+        });
+        router.get("/api/search/file").handler(r -> {
+            Search.getFile(r, root);
+        });
+        router.get("/api/search/files").handler(r -> {
+            Search.listFileFolders(r, root);
+        });
 
         // Serve static files from the dist folder.
         StaticHandler staticHandler = StaticHandler.create("dist");
-        staticHandler.setCachingEnabled(cacheEnabled);
+        staticHandler.setCachingEnabled(true);
         router.route("/dist/*").handler(staticHandler);
 
         // Default to the index page.
@@ -100,6 +138,8 @@ public class Server extends AbstractVerticle {
         });
 
         // Start the server.
-        vertx.createHttpServer().requestHandler(router::accept).listen(port);
+        vertx.createHttpServer()
+            .requestHandler(router::accept)
+            .listen(config().getInteger("port"));
     }
 }
