@@ -17,6 +17,7 @@ package io.sherlock.index;
 
 import io.sherlock.common.options.IndexOptions;
 import io.sherlock.common.options.InvalidOptionException;
+import io.sherlock.common.util.SherlockFile;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -65,6 +66,7 @@ import java.io.File;
 public final class FileIndexer {
 
     private static Logger logger = Logger.getLogger(FileIndexer.class.getName());
+    private static SherlockFile sherlockFile = new SherlockFile();
 
     /**
      * Hidden Constructor.
@@ -92,6 +94,15 @@ public final class FileIndexer {
 
             Path targetPath  = Paths.get(options.getTargetPath());
             Path indexPath   = Paths.get(options.getIndexPath());
+
+            try {
+                sherlockFile.read(targetPath.toString());
+            } catch (IOException e) {
+                logger.error(String.format(
+                    "Failed to read sherlock file: %s",
+                    e.getMessage()
+                ));
+            }
 
             // IndexWriter Configuration.
             Analyzer analyzer = new StandardAnalyzer();
@@ -200,7 +211,7 @@ public final class FileIndexer {
                     // Handle created, modified, or deleted files.
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                         // (Re-)index the file.
-                        if (Files.isRegularFile(changedFile)) {
+                        if (Files.isRegularFile(changedFile) && !sherlockFile.isIgnored(changedFile.toString())) {
                             writeToIndex(writer, indexPath, changedFile);
                             logger.info(String.format("Updated index for file `%s`", changedFile.toString()));
                         }
@@ -239,14 +250,18 @@ public final class FileIndexer {
             Files.walkFileTree(targetPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-                    writeToIndex(writer, indexPath, file);
-                    logger.info(String.format("Indexed file `%s`", file.toString()));
+                    if (!sherlockFile.isIgnored(file.toString())) {
+                        writeToIndex(writer, indexPath, file);
+                        logger.info(String.format("Indexed file `%s`", file.toString()));
+                    }
                     return FileVisitResult.CONTINUE;
                 }
             });
         } else {
-            writeToIndex(writer, indexPath, targetPath);
-            logger.info(String.format("Indexed file `%s`", targetPath.toString()));
+            if (!sherlockFile.isIgnored(targetPath.toString())) {
+                writeToIndex(writer, indexPath, targetPath);
+                logger.info(String.format("Indexed file `%s`", targetPath.toString()));
+            }
         }
     }
 

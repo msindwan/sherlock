@@ -18,6 +18,13 @@ package io.sherlock.common.util;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.File;
+
+import java.util.HashSet;
+
 import io.vertx.core.json.JsonArray;
 
 /**
@@ -66,6 +73,40 @@ public final class FileUtil {
         }
 
         return root;
+    }
+
+    /**
+     * Get File Extension
+     *
+     * Description: Returns the file's extension as a string.
+     * @param path // The path to extract the extension from.
+     * @return the path extension as a string.
+     */
+    public static String getFileExtension(final String path) {
+        int extensionIndex = path.lastIndexOf(".");
+        if (extensionIndex > 0) {
+            return path.substring(extensionIndex);
+        }
+        return null;
+    }
+
+    /**
+     * Read File Into a Set
+     *
+     * Description: Reads a file line-by-line into a set of strings.
+     * @param path         // The path to extract lines from.
+     * @param lines        // The set of lines to update.
+     * @throws IOException // Failure to read the specified file.
+     */
+    public static void readFileIntoSet(final String path, final HashSet<String> lines) throws IOException {
+        File file = new File(path);
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+               lines.add(line);
+            }
+        }
     }
 
 }

@@ -21,6 +21,8 @@ import io.sherlock.common.options.InvalidOptionException;
 import org.apache.commons.cli.ParseException;
 
 import io.sherlock.core.handlers.Search;
+import io.sherlock.common.util.SherlockFile;
+
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.AbstractVerticle;
@@ -31,12 +33,18 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
 
 import java.util.function.Consumer;
+import java.io.IOException;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.BasicConfigurator;
 
 /**
  * Server:
  * Defines the entry point for the Sherlock application.
  */
 public class Server extends AbstractVerticle {
+
+    private static Logger logger = Logger.getLogger(Server.class.getName());
 
     /**
      * Entry point.
@@ -49,6 +57,8 @@ public class Server extends AbstractVerticle {
         Consumer<Vertx> runner;
         VertxOptions options;
         JsonObject config;
+
+        BasicConfigurator.configure();
 
         deploymentOptions = new DeploymentOptions();
         serverOptions = new ServerOptions();
@@ -113,6 +123,16 @@ public class Server extends AbstractVerticle {
         // Get server options.
         final String indexes = config().getString("indexes");
         final String root = config().getString("root");
+        final SherlockFile sherlockFile = new SherlockFile();
+
+        try {
+            sherlockFile.read(root);
+        } catch (IOException e) {
+            logger.error(String.format(
+                "Failed to read sherlock file: %s",
+                e.getMessage()
+            ));
+        }
 
         // Route endpoints.
         Router router = Router.router(vertx);
@@ -120,10 +140,10 @@ public class Server extends AbstractVerticle {
             Search.searchFiles(r, indexes, root);
         });
         router.get("/api/search/file").handler(r -> {
-            Search.getFile(r, root);
+            Search.getFile(r, root, sherlockFile);
         });
         router.get("/api/search/files").handler(r -> {
-            Search.listFileFolders(r, root);
+            Search.listFileFolders(r, root, sherlockFile);
         });
 
         // Serve static files from the dist folder.

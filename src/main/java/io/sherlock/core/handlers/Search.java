@@ -16,6 +16,7 @@
 package io.sherlock.core.handlers;
 
 import io.sherlock.common.util.FileUtil;
+import io.sherlock.common.util.SherlockFile;
 
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -207,10 +208,12 @@ public final class Search {
      * Description: Responds with a list of files and folders for the path.
      * @param routingContext // The vertx routing context.
      * @param root           // The root directory.
+     * @param sherlockFile   // The sherlock file.
      */
     public static void listFileFolders(
         final RoutingContext routingContext,
-        final String root) {
+        final String root,
+        final SherlockFile sherlockFile) {
 
         ArrayList<JsonObject> files;
         HttpServerRequest request;
@@ -237,15 +240,17 @@ public final class Search {
 
         // Iterate through files and create response objects.
         for (File file : targetDirectory.listFiles()) {
-            JsonObject object = new JsonObject();
-            object.put("filename", file.getName());
-            object.put("isDir", file.isDirectory());
+            if (file.isDirectory() || !sherlockFile.isIgnored(file.getAbsolutePath())) {
+                JsonObject object = new JsonObject();
+                object.put("filename", file.getName());
+                object.put("isDir", file.isDirectory());
 
-            if (file.isDirectory()) {
-                responseArray.add(object);
-            } else {
-                // Append files after folders.
-                files.add(object);
+                if (file.isDirectory()) {
+                    responseArray.add(object);
+                } else {
+                    // Append files after folders.
+                    files.add(object);
+                }
             }
         }
 
@@ -265,16 +270,18 @@ public final class Search {
      * Description: Responds with the contents of a file.
      * @param routingContext // The vertx routing context.
      * @param root           // The root directory.
+     * @param sherlockFile   // The sherlock file.
      */
     public static void getFile(
         final RoutingContext routingContext,
-        final String root) {
+        final String root,
+        final SherlockFile sherlockFile) {
 
         String path = FileUtil.pathFromJSONString(
             root,
             routingContext.request().getParam("path")
         );
-        if (path == null) {
+        if (path == null || sherlockFile.isIgnored(path)) {
             Handler.sendError(routingContext, Handler.HTTP_NOT_FOUND, "Path not found.");
         } else {
             routingContext.response()
