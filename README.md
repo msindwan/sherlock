@@ -13,8 +13,7 @@ Sherlock in order to optimize search speeds.
 To get started, first index the desired root directory by running
 
 ```bash
- java -cp sherlock-${SHERLOCK_VERSION}.jar io.sherlock.index.FileIndexer -w -t <target_directory_path> -o
- <output_directory_path>
+ java -cp sherlock-${SHERLOCK_VERSION}.jar io.sherlock.index.FileIndexer -w -t <target_directory_path> -o <output_directory_path>
 ```
 
 The `-w` argument watches for directory changes and automatically updates the indexes. Use the `-h` option for help on
@@ -23,8 +22,7 @@ the list of input parameters and their descriptions.
 Once the directory of indexes is available, start the server by running
 
 ```bash
- java -cp sherlock-${SHERLOCK_VERSION}.jar io.sherlock.core.Server -r <root_directory_path> -i
- <indexes_directory_path>
+ java -cp sherlock-${SHERLOCK_VERSION}.jar io.sherlock.core.Server -r <root_directory_path> -i <indexes_directory_path>
 ```
 
 The `root_directory_path` is where files are served from and the `indexes_directory_path` is the directory where the
