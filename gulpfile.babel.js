@@ -76,18 +76,6 @@ gulp.task('css', 'Builds the css files.', () => {
         .pipe(gulp.dest(DIST));
 });
 
-gulp.task('server', 'Builds the server.', ['js', 'css'], () => {
-    if (IS_PRODUCTION) {
-        const compiler = child_process.exec('mvn compile', (error) => {
-            if (!error) {
-                // TODO: deploy
-            }
-        });
-        compiler.stdout.pipe(process.stdout);
-        compiler.stderr.pipe(process.stderr);
-    }
-});
-
 gulp.task('lint', 'Lints all of the modules', () => {
     // Run sass lint on the provided sass files.
     gulp.src(SASS_FILES)
@@ -112,7 +100,7 @@ gulp.task('clean', 'Cleans the build folder', (cb) => {
    return del(DIST, cb);
 });
 
-gulp.task('default', 'Builds all of the modules.', ['server'], () => {
+gulp.task('default', 'Builds all of the modules.', ['js', 'css'], (cb) => {
     gulp.src([EXT + "/fonts/**/*"])
         .pipe(gulp.dest(DIST + "/fonts"));
 

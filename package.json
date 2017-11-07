@@ -1,7 +1,7 @@
 {
   "name": "sherlock",
   "version": "1.0.0",
-  "description": "Provides an interface to browse or search files.",
+  "description": "Sherlock is a tool that exposes a web interface for searching files over a network.",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@bitbucket.org/msindwan/sherlock.git"
