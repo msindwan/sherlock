@@ -7,7 +7,7 @@ interface with core features needed to quickly search for keyword arguments.
 ## Deployment
 
 Sherlock requires Java 7 or higher. You can download the latest jar file
-[here](https://bitbucket.org/msindwan/sherlock/downloads/). You will also need to index files before you can start
+[here](https://github.com/msindwan/sherlock/releases). You will also need to index files before you can start
 Sherlock in order to optimize search speeds.
 
 To get started, first index the desired root directory by running
@@ -52,7 +52,7 @@ To start development against **the FileIndexer and the Server**:
 
 1. From the root directory, run `mvn install` if you haven't already.
 2. Run `mvn compile` to compile your source code.
-3. run `mvn exec:java -Dexec.mainClass="io.sherlock.index.FileIndexer" -Dexec.args="..."` to start the FileIndexer.
+3. Run `mvn exec:java -Dexec.mainClass="io.sherlock.index.FileIndexer" -Dexec.args="..."` to start the FileIndexer.
 4. Run `mvn exec:java -Dexec.mainClass="io.sherlock.core.Server" -Dexec.args="..."` to start the server.
 
 To start development on the **front-end assets**:
@@ -62,8 +62,8 @@ To start development on the **front-end assets**:
 
 To build Sherlock:
 
-1. run `gulp` with `NODE_ENV` set to `production` to build front-end assets.
-2. run `mvn package`.
+1. Run `gulp` with `NODE_ENV` set to `production` to build front-end assets.
+2. Run `mvn package`.
 
 ### Testing and liniting
 
