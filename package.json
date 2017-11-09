@@ -4,11 +4,11 @@
   "description": "Sherlock is a tool that exposes a web interface for searching files over a network.",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@bitbucket.org/msindwan/sherlock.git"
+    "url": "git+ssh://git@github.com:msindwan/sherlock.git"
   },
   "author": "Mayank Sindwani",
   "license": "Apache License, Version 2.0",
-  "homepage": "https://bitbucket.org/msindwan/sherlock#readme",
+  "homepage": "https://github.com/msindwan/sherlock#readme",
   "devDependencies": {
     "axios": "^0.16.2",
     "babel-preset-env": "^1.6.0",

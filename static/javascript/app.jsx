@@ -9,7 +9,6 @@
 
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import SearchContainer from './views/containers/SearchContainer';
-import TermsContainer from './views/containers/TermsContainer';
 import ReactDOM from 'react-dom';
 import React from 'react';
 
@@ -19,7 +18,6 @@ window.addEventListener("load", function() {
         <Router>
             <Switch>
                 <Route exact path="/" component={SearchContainer}/>
-                <Route exact path="/terms" component={TermsContainer}/>
             </Switch>
         </Router>
     ), document.getElementById("app"));
