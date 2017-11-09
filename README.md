@@ -4,8 +4,8 @@ Inspired by [Opengrok](https://opengrok.github.io/OpenGrok/), Sherlock is a tool
 searching files over a network. It aims to be minimalistic, reliable, and performance-driven by providing a simple user
 interface with core features needed to quickly search for keyword arguments.
 
-** By using Sherlock you agree to the [terms of use and privacy policy](
-    https://github.com/msindwan/sherlock/wiki/Terms-of-Use-and-Privacy-Policy) **
+**By using Sherlock you agree to the [terms of use and privacy policy](
+    https://github.com/msindwan/sherlock/wiki/Terms-of-Use-and-Privacy-Policy)**
 
 ## Deployment
 
