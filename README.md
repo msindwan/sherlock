@@ -85,4 +85,4 @@ Sherlock is built on incredibly robust and well-designed third-party libraries:
 
 ## License
 
-Sherlock is licensed under the Apache License, Version 2.0.
+Sherlock is licensed under the Apache License, Version 2.0
