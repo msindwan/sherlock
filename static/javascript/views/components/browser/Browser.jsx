@@ -190,7 +190,7 @@ const Browser = React.createClass({
         },  error => {
             this.setState({
                 isLoading: false,
-                error: error.response.data.message
+                error: error.message || error.response.data.message
             });
         });
     },
@@ -209,7 +209,7 @@ const Browser = React.createClass({
         }, error => {
             this.setState({
                 isLoading: false,
-                error: error.response.data.message
+                error: error.message || error.response.data.message
             });
         });
     },
@@ -229,7 +229,7 @@ const Browser = React.createClass({
             }, error => {
                 this.setState({
                     isLoading: false,
-                    error: error.response.data.message
+                    error: error.message || error.response.data.message
                 });
             });
         } else {
