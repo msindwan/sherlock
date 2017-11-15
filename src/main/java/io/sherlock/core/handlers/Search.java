@@ -283,6 +283,12 @@ public final class Search {
         );
         if (path == null || sherlockFile.isIgnored(path)) {
             Handler.sendError(routingContext, Handler.HTTP_NOT_FOUND, "Path not found.");
+        } else if (!Files.exists(Paths.get(path))) {
+            Handler.sendError(
+                routingContext,
+                Handler.HTTP_NOT_FOUND,
+                "Path not found."
+            );
         } else {
             routingContext.response()
                 .sendFile(path);

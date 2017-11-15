@@ -8,6 +8,7 @@
  **/
 
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import NotFoundContainer from './views/containers/NotFoundContainer';
 import SearchContainer from './views/containers/SearchContainer';
 import ReactDOM from 'react-dom';
 import React from 'react';
@@ -18,6 +19,7 @@ window.addEventListener("load", function() {
         <Router>
             <Switch>
                 <Route exact path="/" component={SearchContainer}/>
+                <Route component={NotFoundContainer}/>
             </Switch>
         </Router>
     ), document.getElementById("app"));
