@@ -11,3 +11,17 @@ pre {
     display: block;
     margin: auto;
 }
+
+.error-container {
+    .message {
+        text-align: center;
+        color: #959595;
+    }
+
+    .code {
+        font-size: 100px;
+        text-align: center;
+        font-weight: 100;
+        color: #cf5b5b;
+    }
+}
