@@ -110,6 +110,25 @@ const Browser = React.createClass({
     },
 
     /**
+     * Set Error State
+     *
+     * Description: Sets the browser view's state based on an api error.
+     * @param {error}    // The error encountered.
+     */
+    setErrorState(error) {
+        let message;
+        if (error.response.data && error.response.data.message) {
+            message = error.response.data.message;
+        } else {
+            message = error.message;
+        }
+        this.setState({
+            isLoading: false,
+            error: message
+        });
+    },
+
+    /**
      * Load Page Args
      *
      * Description: Loads the state of the page based on the query parameters provided.
@@ -188,10 +207,7 @@ const Browser = React.createClass({
             // TODO: Handle error.
             this.setFilesState(path, response.data);
         },  error => {
-            this.setState({
-                isLoading: false,
-                error: error.message || error.response.data.message
-            });
+            this.setErrorState(error);
         });
     },
 
@@ -207,10 +223,7 @@ const Browser = React.createClass({
         SherlockAPI.fetchFile(path, response => {
             this.setFileState(path, response.request.responseText, line);
         }, error => {
-            this.setState({
-                isLoading: false,
-                error: error.message || error.response.data.message
-            });
+            this.setErrorState(error);
         });
     },
 
@@ -227,10 +240,7 @@ const Browser = React.createClass({
             SherlockAPI.searchFiles(searchText, response => {
                 this.setSearchState(searchText, response.data);
             }, error => {
-                this.setState({
-                    isLoading: false,
-                    error: error.message || error.response.data.message
-                });
+                this.setErrorState(error);
             });
         } else {
             // Reset the search state.
