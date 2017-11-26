@@ -16,8 +16,6 @@
 package io.sherlock.common.util;
 
 import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.io.IOException;
 
 import java.util.HashSet;
@@ -53,10 +51,10 @@ public class SherlockFile {
      * @throws IOException // Failure to read the specified file.
      */
     public final void read(final String path) throws IOException {
-        Path sherlockPath = Paths.get(path, ".sherlock");
+        String sherlockPath = Paths.get(path, ".sherlock").toString();
         lines.clear();
-        if (Files.exists(sherlockPath)) {
-            FileUtil.readFileIntoSet(sherlockPath.toString(), lines);
+        if (FileUtil.exists(sherlockPath)) {
+            FileUtil.readFileIntoSet(sherlockPath, lines);
         }
     }
 
@@ -69,6 +67,16 @@ public class SherlockFile {
      */
     public final Boolean isIgnored(final String filePath) {
         return lines.contains(FileUtil.getFileExtension(filePath));
+    }
+
+    /**
+     * Size
+     *
+     * Description: Gets the size of the sherlock file.
+     * @return the number of lines in the sherlock file.
+     */
+    public final int size() {
+        return lines.size();
     }
 
 }

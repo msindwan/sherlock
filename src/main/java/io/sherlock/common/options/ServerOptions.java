@@ -15,14 +15,13 @@
  */
 package io.sherlock.common.options;
 
+import io.sherlock.common.util.FileUtil;
+
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 /**
  * ServerOptions:
@@ -37,6 +36,9 @@ public class ServerOptions extends SherlockOptions {
     public static final String INDEXES = "indexes";
     public static final String ROOT = "root";
     public static final String PORT = "port";
+
+    public static final String DEFAULT_ROOT = null;
+    public static final String DEFAULT_INDEXES = null;
     public static final int DEFAULT_PORT = 8080;
 
     private static final Option ROOT_OPTION = Option.builder("r")
@@ -65,7 +67,8 @@ public class ServerOptions extends SherlockOptions {
      */
     public ServerOptions() {
         super();
-        this.root = null;
+        this.root = DEFAULT_ROOT;
+        this.indexes = DEFAULT_INDEXES;
         this.port = DEFAULT_PORT;
 
         // Add the options.
@@ -106,7 +109,7 @@ public class ServerOptions extends SherlockOptions {
 
     @Override
     public final void parse(final String[] args)
-        throws ParseException, InvalidOptionException {
+        throws ParseException, InvalidOptionException, NumberFormatException {
 
         CommandLineParser parser;
         CommandLine cmd;
@@ -118,7 +121,7 @@ public class ServerOptions extends SherlockOptions {
         String indexesValue = cmd.getOptionValue(INDEXES);
 
         // Check if the path to root exists.
-        if (!Files.exists(Paths.get(rootValue))) {
+        if (!FileUtil.exists(rootValue)) {
             throw new InvalidOptionException(String.format(
                 "[Invalid Option] %s does not exist or permission denied.",
                 rootValue
@@ -126,7 +129,7 @@ public class ServerOptions extends SherlockOptions {
         }
 
         // Check if indexes path exists.
-        if (!Files.exists(Paths.get(indexesValue))) {
+        if (!FileUtil.exists(indexesValue)) {
             throw new InvalidOptionException(String.format(
                 "[Invalid Option] %s does not exist or permission denied.",
                 indexesValue
@@ -137,7 +140,7 @@ public class ServerOptions extends SherlockOptions {
         this.indexes = indexesValue;
 
         if (cmd.hasOption(PORT)) {
-            this.port = ((Number) cmd.getParsedOptionValue(PORT)).intValue();
+            this.port = Integer.parseInt(cmd.getOptionValue(PORT));
         }
 
     }

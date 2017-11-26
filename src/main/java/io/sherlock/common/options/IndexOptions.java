@@ -15,14 +15,13 @@
  */
 package io.sherlock.common.options;
 
+import io.sherlock.common.util.FileUtil;
+
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 /**
  * IndexOptions:
@@ -41,6 +40,12 @@ public class IndexOptions extends SherlockOptions {
     public static final String TERGET_PATH = "target";
     public static final String OUTPUT_PATH = "output";
     public static final String WATCH_FLAG  = "watch";
+
+    public static final Boolean DEFAULT_FORCE = false;
+    public static final Boolean DEFAULT_DELETE = false;
+    public static final Boolean DEFAULT_WATCH = false;
+    public static final String DEFAULT_TARGET_PATH = null;
+    public static final String DEFAULT_INDEX_PATH = null;
 
     private static final Option FORCE_FLAG_OPTION = Option.builder("f")
         .longOpt(FORCE_FLAG)
@@ -76,13 +81,13 @@ public class IndexOptions extends SherlockOptions {
      */
     public IndexOptions() {
         super();
-        this.forceFlag = false;
-        this.deleteFlag = false;
-        this.watchFlag = false;
-        this.targetPath = null;
-        this.indexPath = null;
+        this.forceFlag  = DEFAULT_FORCE;
+        this.deleteFlag = DEFAULT_DELETE;
+        this.watchFlag  = DEFAULT_WATCH;
+        this.targetPath = DEFAULT_TARGET_PATH;
+        this.indexPath  = DEFAULT_INDEX_PATH;
 
-        // Add the options.=
+        // Add the options.
         addOption(FORCE_FLAG_OPTION);
         addOption(DELETE_FLAG_OPTION);
         addOption(WATCH_FLAG_OPTION);
@@ -153,8 +158,7 @@ public class IndexOptions extends SherlockOptions {
         String target = cmd.getOptionValue(TERGET_PATH);
         String index  = cmd.getOptionValue(OUTPUT_PATH);
 
-        // Check if the path to index exists.
-        if (!Files.exists(Paths.get(target))) {
+        if (!FileUtil.exists(target)) {
             throw new InvalidOptionException(String.format(
                 "[Invalid Option] %s does not exist or permission denied.",
                 target

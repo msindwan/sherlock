@@ -16,7 +16,9 @@
 package io.sherlock.common.util;
 
 import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.InvalidPathException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -46,10 +48,7 @@ public final class FileUtil {
      * @param json // The JSON string.
      * @return the path as a string.
      */
-    public static String pathFromJSONString(
-        final String root,
-        final String json) {
-
+    public static String pathFromJSONString(final String root, final String json) {
         Path normalizedPath;
         JsonArray jsonPath;
         String[] pathList;
@@ -109,4 +108,20 @@ public final class FileUtil {
         }
     }
 
+    /**
+     * Exists
+     *
+     * Description: Checks if a path exists.
+     * @param path  // The path to check.
+     * @return true if it exists; false otherwise.
+     */
+    public static Boolean exists(final String path) {
+        Boolean fileExists;
+        try {
+            fileExists = Files.exists(Paths.get(path));
+        } catch (InvalidPathException | NullPointerException ex) {
+            fileExists = false;
+        }
+        return fileExists;
+    }
 }

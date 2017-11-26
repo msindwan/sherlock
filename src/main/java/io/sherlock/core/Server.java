@@ -84,7 +84,7 @@ public class Server extends AbstractVerticle {
             config.put("indexes", serverOptions.getIndexes());
             config.put("port", serverOptions.getPort());
 
-        } catch (ParseException | InvalidOptionException e) {
+        } catch (ParseException | InvalidOptionException | NumberFormatException e) {
             // Handle cli exceptions.
             System.err.println(String.format(
                 "Failed to process args: %s",

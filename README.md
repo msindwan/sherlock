@@ -1,5 +1,7 @@
 # Sherlock
 
+[![circleci](https://circleci.com/gh/msindwan/sherlock.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/msindwan/sherlock)
+
 Inspired by [Opengrok](https://opengrok.github.io/OpenGrok/), Sherlock is a tool that exposes a web interface for
 searching files over a network. It aims to be minimalistic, reliable, and performance-driven by providing a simple user
 interface with core features needed to quickly search for keyword arguments.
@@ -70,7 +72,7 @@ To build Sherlock:
 
 ### Testing and liniting
 
-TODO
+Run `mvn test` to run unit tests.
 
 ## Third-party Libraries Used
 
