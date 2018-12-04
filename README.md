@@ -63,11 +63,11 @@ To start development against **the FileIndexer and the Server**:
 To start development on the **front-end assets**:
 
 1. Run `npm install` in the root directory.
-2. Run `gulp` to build and watch front-end assets (Note that you'll need to restart the server and clear the cache when front-end assets change).
+2. Run `npm run dev` to build and watch front-end assets (Note that you'll need to restart the server and clear the cache when front-end assets change).
 
 To build Sherlock:
 
-1. Run `gulp` with `NODE_ENV` set to `production` to build front-end assets.
+1. Run `npm run build` to build front-end assets.
 2. Run `mvn package`.
 
 ### Testing and liniting

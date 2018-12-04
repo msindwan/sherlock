@@ -147,14 +147,14 @@ public class Server extends AbstractVerticle {
         });
 
         // Serve static files from the dist folder.
-        StaticHandler staticHandler = StaticHandler.create("dist");
+        StaticHandler staticHandler = StaticHandler.create("static");
         staticHandler.setCachingEnabled(true);
-        router.route("/dist/*").handler(staticHandler);
+        router.route("/static/*").handler(staticHandler);
 
         // Default to the index page.
         router.route().handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
-            response.sendFile("dist/index.html");
+            response.sendFile("static/index.html");
         });
 
         // Start the server.

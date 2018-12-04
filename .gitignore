@@ -7,4 +7,4 @@ pkg
 node_modules
 .vertx
 target
-src/main/resources/dist
+src/main/resources/static/dist
